@@ -11,7 +11,7 @@ services:
       MYSQL_USER: se47
       MYSQL_PASSWORD: capstone2@se47
     ports:
-      - "3306:3306"
+      - "4747:3306"
     volumes:
       - db_data:/var/lib/mysql
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
