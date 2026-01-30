@@ -1,0 +1,79 @@
+package com.example.fuji.entity;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import jakarta.persistence.*;
+import lombok.Data;
+
+@Entity
+@Table(name = "courses")
+@Data
+public class Course {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false, length = 200)
+    private String title;
+
+    @Column(columnDefinition = "TEXT NOT NULL")
+    private String description = "";
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+        name = "instructor_id",
+        nullable = false,
+        foreignKey = @ForeignKey(
+            name = "fk_courses_instructor",
+            foreignKeyDefinition = "FOREIGN KEY (instructor_id) REFERENCES users(id) ON DELETE RESTRICT"
+        )
+    )
+    private User instructor;
+
+    @Column(name = "thumbnail_url", length = 500)
+    private String thumbnailUrl;
+
+    @Column(precision = 10, scale = 2, nullable = false)
+    private BigDecimal price = BigDecimal.ZERO;
+
+    @Column(name = "student_count", columnDefinition = "INT UNSIGNED DEFAULT 0")
+    private Integer studentCount = 0;
+
+    @Column(name = "lesson_count", columnDefinition = "INT UNSIGNED DEFAULT 0")
+    private Integer lessonCount = 0;
+
+    @Column(name = "total_duration", columnDefinition = "INT UNSIGNED DEFAULT 0")
+    private Integer totalDuration = 0;
+
+    @Column(name = "average_rating", precision = 3, scale = 2)
+    private BigDecimal averageRating = BigDecimal.ZERO;
+
+    @Column(name = "rating_count", columnDefinition = "INT UNSIGNED DEFAULT 0")
+    private Integer ratingCount = 0;
+
+    @Column(name = "is_published", nullable = false)
+    private Boolean isPublished = false;
+
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
+}
+//các thuộc tính của @column:
+/*
+    name: Tên của cột trong bảng cơ sở dữ liệu.
+    nullable: Xác định xem cột có thể chứa giá trị NULL hay không.
+    length: Độ dài tối đa của chuỗi (áp dụng cho các kiểu dữ liệu chuỗi như VARCHAR).
+    unique: Xác định xem giá trị trong cột có phải là duy nhất hay không.
+    columnDefinition: Định nghĩa SQL tùy chỉnh cho cột.
+    insertable: Xác định xem cột có được bao gồm trong các câu lệnh INSERT hay không.
+    updatable: Xác định xem cột có được bao gồm trong các câu lệnh UPDATE hay không.
+ */

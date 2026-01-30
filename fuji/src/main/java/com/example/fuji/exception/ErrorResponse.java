@@ -8,9 +8,6 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.Map;
 
-/**
- * Standard Error Response format
- */
 @Data
 @Builder
 @NoArgsConstructor
@@ -20,5 +17,6 @@ public class ErrorResponse {
     private int status;
     private String error;
     private String message;
-    private Map<String, String> errors;  // For validation errors
+    private Map<String, String> errors;
+    private String details; // Exception class and stack trace for debugging
 }

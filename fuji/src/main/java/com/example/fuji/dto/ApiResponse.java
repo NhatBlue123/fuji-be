@@ -7,10 +7,6 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
-/**
- * Standard API Response wrapper
- * Giống { success: true, data: ..., message: ... } trong Node.js
- */
 @Data
 @Builder
 @NoArgsConstructor
@@ -27,9 +23,6 @@ public class ApiResponse<T> {
     @Builder.Default
     private LocalDateTime timestamp = LocalDateTime.now();
 
-    /**
-     * Success response with data
-     */
     public static <T> ApiResponse<T> success(T data) {
         return ApiResponse.<T>builder()
                 .success(true)
@@ -37,9 +30,6 @@ public class ApiResponse<T> {
                 .build();
     }
 
-    /**
-     * Success response with message and data
-     */
     public static <T> ApiResponse<T> success(String message, T data) {
         return ApiResponse.<T>builder()
                 .success(true)
@@ -48,13 +38,11 @@ public class ApiResponse<T> {
                 .build();
     }
 
-    /**
-     * Success response with only message
-     */
     public static <T> ApiResponse<T> success(String message) {
         return ApiResponse.<T>builder()
                 .success(true)
                 .message(message)
                 .build();
     }
+
 }

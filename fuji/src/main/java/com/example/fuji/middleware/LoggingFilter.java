@@ -8,10 +8,6 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 
-/**
- * Logging Filter - Log tất cả requests
- * Giống middleware logging trong Express
- */
 @Slf4j
 @Component
 public class LoggingFilter implements Filter {
@@ -25,17 +21,14 @@ public class LoggingFilter implements Filter {
 
         long startTime = System.currentTimeMillis();
 
-        // Log request
         log.info("→ {} {} from {}",
             req.getMethod(),
             req.getRequestURI(),
             req.getRemoteAddr()
         );
 
-        // Continue request
         chain.doFilter(request, response);
 
-        // Log response
         long duration = System.currentTimeMillis() - startTime;
         log.info("← {} {} - Status: {} - Duration: {}ms",
             req.getMethod(),

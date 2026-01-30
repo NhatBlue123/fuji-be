@@ -10,15 +10,15 @@ public class CorsConfig implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/api/**")  // Áp dụng cho tất cả /api/**
+        registry.addMapping("/api/**")
                 .allowedOrigins(
-                        "http://localhost:3000",      // Next.js dev
-                        "http://localhost:5173",      // Vite dev
-                        "https://your-domain.com"     // Production
+                        "http://localhost:3000",
+                        "http://localhost:5173",
+                        "https://your-domain.com"
                 )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true)
-                .maxAge(3600);  // Cache preflight request 1 hour
+                .maxAge(3600);
     }
 }
