@@ -2,13 +2,17 @@ package com.example.fuji.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
 
 @Configuration
+@EnableWebSecurity
+@Order(1)
 public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -19,12 +23,11 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable()) 
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**", "/api/init/**").permitAll() 
-                
-                .anyRequest().authenticated()
+                .anyRequest().permitAll() 
+              //  .anyRequest().authenticated()
             );
         return http.build();
     }
-
+    
 
 }
