@@ -1,5 +1,5 @@
 package com.example.fuji.exception;
-
+//dùng cho các exception khi không tìm thấy tài nguyên
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

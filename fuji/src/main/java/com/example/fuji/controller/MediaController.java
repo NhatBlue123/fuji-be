@@ -1,7 +1,7 @@
 package com.example.fuji.controller;
 
-import com.example.fuji.dto.ApiResponse;
-import com.example.fuji.dto.MediaDTO;
+import com.example.fuji.dto.request.MediaDTO;
+import com.example.fuji.dto.response.ApiResponse;
 import com.example.fuji.exception.BadRequestException;
 import com.example.fuji.service.MediaService;
 import lombok.RequiredArgsConstructor;

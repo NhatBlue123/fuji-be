@@ -1,8 +1,9 @@
 package com.example.fuji.service;
 
 import com.cloudinary.Cloudinary;
-import com.example.fuji.dto.MediaDTO;
-import com.example.fuji.util.MediaValidator;
+import com.example.fuji.dto.request.MediaDTO;
+import com.example.fuji.utils.MediaValidator;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.coobird.thumbnailator.Thumbnails;
@@ -29,6 +30,7 @@ public class MediaService {
     @SuppressWarnings("unchecked")
     public MediaDTO uploadImage(MultipartFile file) throws IOException {
         mediaValidator.validate(file);
+        mediaValidator.isImage(file);
 
         byte[] optimizedImage = optimizeImage(file);
 
@@ -38,13 +40,14 @@ public class MediaService {
             "folder", "fuji/images"
         ));
 
-        log.info("Image tải thành công: {}", uploadResult.get("secure_url"));
+        log.info("Ảnh tải thành công: {}", uploadResult.get("secure_url"));
         return buildMediaDTO(uploadResult, "image");
     }
 
     @SuppressWarnings("unchecked")
     public MediaDTO uploadVideo(MultipartFile file) throws IOException {
         mediaValidator.validate(file);
+        mediaValidator.isVideo(file);
 
         try (InputStream is = file.getInputStream()) {
             Map<String, Object> uploadResult = cloudinary.uploader().upload(is, Map.of(
@@ -68,7 +71,7 @@ public class MediaService {
     @SuppressWarnings("unchecked")
     public MediaDTO uploadAudio(MultipartFile file) throws IOException {
         mediaValidator.validate(file);
-
+        mediaValidator.isAudio(file);
         try (InputStream is = file.getInputStream()) {
             Map<String, Object> uploadResult = cloudinary.uploader().upload(is, Map.of(
                 "resource_type", "auto",
@@ -81,14 +84,14 @@ public class MediaService {
                 )
             ));
 
-            log.info("Audio uploaded successfully: {}", uploadResult.get("secure_url"));
+            log.info("Tải audio thành công: {}", uploadResult.get("secure_url"));
             return buildMediaDTO(uploadResult, "audio");
         }
     }
 
     public void deleteMedia(String publicId, String resourceType) throws Exception {
         cloudinary.uploader().destroy(publicId, Map.of("resource_type", resourceType));
-        log.info("Deleted media: {} ({})", publicId, resourceType);
+        log.info("Xóa media thành công: {} ({})", publicId, resourceType);
     }
 
     private byte[] optimizeImage(MultipartFile file) throws IOException {

@@ -1,4 +1,4 @@
-package com.example.fuji.dto;
+package com.example.fuji.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

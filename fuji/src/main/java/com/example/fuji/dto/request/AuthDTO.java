@@ -1,4 +1,4 @@
-package com.example.fuji.dto;
+package com.example.fuji.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -9,9 +9,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class AuthRequest {
-     @NotBlank(message = "Username không được để trống")
-    @Size(min = 4, max = 20, message = "Username phải từ 4 đến 20 ký tự")
+public class AuthDTO {
     private String username;
 
     @NotBlank(message = "Mật khẩu không được để trống")

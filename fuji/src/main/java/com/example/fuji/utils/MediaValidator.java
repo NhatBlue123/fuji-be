@@ -1,4 +1,4 @@
-package com.example.fuji.util;
+package com.example.fuji.utils;
 
 import com.example.fuji.exception.BadRequestException;
 import org.springframework.stereotype.Component;
@@ -39,7 +39,7 @@ public class MediaValidator {
             throw new BadRequestException("MIME type không hợp lệ: " + mimeType);
         }
     }
-
+    //lấy phần mở rộng của file
     private String getExtension(String filename) {
         return filename.contains(".")
             ? filename.substring(filename.lastIndexOf('.') + 1).toLowerCase()
