@@ -1,4 +1,4 @@
-package com.example.fuji.util;
+package com.example.fuji.utils;
 
 import java.util.UUID;
 

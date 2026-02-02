@@ -1,10 +1,10 @@
-package com.example.fuji.dto;
+package com.example.fuji.dto.request;
 
 import lombok.Data;
 
 
 @Data
-public class VerifyOtpRequest {
+public class VerifyOtpDTO {
     private String email;
     private String otpCode;
 }

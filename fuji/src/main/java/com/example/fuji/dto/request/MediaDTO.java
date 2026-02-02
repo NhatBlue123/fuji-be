@@ -1,4 +1,4 @@
-package com.example.fuji.dto;
+package com.example.fuji.dto.request;
 
 import lombok.Builder;
 import lombok.Data;

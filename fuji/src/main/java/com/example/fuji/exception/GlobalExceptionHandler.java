@@ -1,5 +1,5 @@
 package com.example.fuji.exception;
-
+//dùng cho các exception khi dữ liệu đầu vào không hợp lệ hoặc khi có xung đột, khi không tìm thấy tài nguyên, khi chưa đăng nhập: trả status code và message
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -83,6 +83,20 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
 
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ErrorResponse> handleConflict(ConflictException ex) {
+        log.error("Conflict: {}", ex.getMessage());
+
+        ErrorResponse response = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.CONFLICT.value())
+                .error("Conflict")
+                .message(ex.getMessage())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex) {
         log.error("=== INTERNAL SERVER ERROR (500) ===");
@@ -90,7 +104,7 @@ public class GlobalExceptionHandler {
         log.error("Error message: {}", ex.getMessage());
         log.error("Stack trace:", ex);
 
-        // Build detailed error info
+        // format cho thông tin lỗi
         StringBuilder details = new StringBuilder();
         details.append("Exception: ").append(ex.getClass().getName()).append("\n");
         details.append("Message: ").append(ex.getMessage()).append("\n");
