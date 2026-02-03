@@ -2,6 +2,7 @@ package com.example.fuji.service;
 
 import java.time.LocalDateTime;
 import java.util.Random;
+import java.util.UUID;
 
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -16,11 +17,13 @@ import com.example.fuji.dto.request.RegisterDTO;
 import com.example.fuji.dto.response.AuthResponse;
 import com.example.fuji.entity.Otp;
 import com.example.fuji.entity.User;
+import com.example.fuji.entity.UserSession;
 import com.example.fuji.exception.ConflictException;
 import com.example.fuji.exception.ResourceNotFoundException;
 import com.example.fuji.exception.UnauthorizedException;
 import com.example.fuji.repository.OtpRepository;
 import com.example.fuji.repository.UserRepository;
+import com.example.fuji.repository.UserSessionRepository;
 import com.example.fuji.utils.JwtUtils;
 
 import lombok.RequiredArgsConstructor;
@@ -37,6 +40,7 @@ public class AuthService {
     private final EmailService emailService;
     private final AuthenticationManager authenticationManager;
     private final JwtUtils jwtUtils;
+    private final UserSessionRepository userSessionRepository;
 
     @Transactional
     public String register(RegisterDTO request) {
@@ -104,7 +108,14 @@ public class AuthService {
         }
 
         String jwt = jwtUtils.generateTokenFromUsername(user.getUsername());
+        String refreshToken = UUID.randomUUID().toString();
 
-        return new AuthResponse(jwt, user.getUsername(), user.getEmail());
+        UserSession session = new UserSession();
+        session.setUser(user);
+        session.setSessionToken(refreshToken);
+        session.setExpiresAt(LocalDateTime.now().plusDays(7)); 
+        userSessionRepository.save(session);
+
+        return new AuthResponse(jwt, refreshToken, user.getUsername(), user.getEmail());
     }
 }
