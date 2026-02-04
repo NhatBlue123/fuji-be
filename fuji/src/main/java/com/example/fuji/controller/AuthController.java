@@ -1,7 +1,12 @@
 package com.example.fuji.controller;
 
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.example.fuji.dto.request.AuthDTO;
 import com.example.fuji.dto.request.RegisterDTO;
@@ -12,6 +17,7 @@ import com.example.fuji.service.AuthService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -39,8 +45,37 @@ public class AuthController {
 
     @PostMapping("/login")
     @Operation(summary = "Đăng nhập")
-    public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody AuthDTO authRequest) {
-        AuthResponse response = authService.login(authRequest);
-        return ResponseEntity.ok(ApiResponse.success("Đăng nhập thành công", response));
+    public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody AuthDTO authRequest, HttpServletResponse response) {
+        AuthResponse authData = authService.login(authRequest);
+        ResponseCookie accessCookie = ResponseCookie.from("accessToken", authData.getAccessToken())
+                .httpOnly(true)
+                .secure(false)
+                .path("/")
+                .maxAge(60 * 60)
+                .sameSite("Lax")
+                .build();
+
+        ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", authData.getRefreshToken())
+                .httpOnly(true)
+                .secure(false)
+                .path("/")
+                .maxAge(7 * 24 * 60 * 60) // 7 ngày
+                .sameSite("Lax")
+                .build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
+        return ResponseEntity.ok(ApiResponse.success("Đăng nhập thành công", authData));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(HttpServletResponse response) {
+        ResponseCookie deleteAccess = ResponseCookie.from("accessToken", "").maxAge(0).path("/").build();
+        ResponseCookie deleteRefresh = ResponseCookie.from("refreshToken", "").maxAge(0).path("/").build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE, deleteAccess.toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, deleteRefresh.toString());
+
+        return ResponseEntity.ok("Đăng xuất thành công");
     }
 }

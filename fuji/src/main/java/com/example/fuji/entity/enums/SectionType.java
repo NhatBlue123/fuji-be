@@ -1,4 +1,4 @@
-package com.example.fuji.constant;
+package com.example.fuji.entity.enums;
 
 public enum SectionType {
     VOCABULARY,
@@ -6,3 +6,4 @@ public enum SectionType {
     READING,   
     LISTENING
 }
+
