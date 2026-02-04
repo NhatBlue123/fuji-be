@@ -17,7 +17,8 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+     // USERNAME có thể null nếu login bằng Google (Google user không cần username)
+    @Column(unique = true)
     private String username;
 
     @Column(nullable = false, unique = true)
@@ -29,8 +30,16 @@ public class User {
     @Column(name = "full_name")
     private String fullName;
 
+    //google OAuth (Mỗi user Google có ID riêng → tránh trùng email)
+    @Column(name = "google_id", unique = true)
+    private String googleId;
+
+    //theo dõi trạng thái account (OAuth user không cần kích hoạt email)
     @Column(name = "is_active")
-    private Boolean isActive = false;
+    private Boolean isActive = true;
+
+    //theo dõi login (Lưu lần đăng nhập cuối cùng)
+    private LocalDateTime lastLogin;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -38,5 +47,7 @@ public class User {
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
+        if (isActive == null) isActive = true;
+
     }
 }
