@@ -22,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 public class AuthController {
 
     private final AuthService authService;
+    private final com.example.fuji.utils.AuthUtils authUtils;
 
     @PostMapping("/register")
     @Operation(summary = "Đăng ký tài khoản mới")
@@ -42,5 +43,31 @@ public class AuthController {
     public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody AuthDTO authRequest) {
         AuthResponse response = authService.login(authRequest);
         return ResponseEntity.ok(ApiResponse.success("Đăng nhập thành công", response));
+    }
+
+    @PostMapping("/refresh")
+    @Operation(summary = "Làm mới access token")
+    public ResponseEntity<ApiResponse<AuthResponse>> refresh(
+            @CookieValue(name = "refreshToken", required = false) String cookieToken,
+            @RequestBody(required = false) java.util.Map<String, String> body) {
+
+        // Ưu tiên cookie, fallback sang body
+        String refreshToken = cookieToken != null ? cookieToken :
+                             (body != null ? body.get("refreshToken") : null);
+
+        if (refreshToken == null) {
+            throw new com.example.fuji.exception.UnauthorizedException("Refresh token không được cung cấp");
+        }
+
+        AuthResponse response = authService.refreshAccessToken(refreshToken);
+        return ResponseEntity.ok(ApiResponse.success("Làm mới token thành công", response));
+    }
+
+    @PostMapping("/logout")
+    @Operation(summary = "Đăng xuất")
+    public ResponseEntity<ApiResponse<String>> logout() {
+        Long userId = authUtils.getCurrentUserId();
+        authService.logout(userId);
+        return ResponseEntity.ok(ApiResponse.success("Đăng xuất thành công"));
     }
 }

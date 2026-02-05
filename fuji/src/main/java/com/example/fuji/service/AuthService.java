@@ -37,6 +37,7 @@ public class AuthService {
     private final EmailService emailService;
     private final AuthenticationManager authenticationManager;
     private final JwtUtils jwtUtils;
+    private final RefreshTokenService refreshTokenService;
 
     @Transactional
     public String register(RegisterDTO request) {
@@ -103,8 +104,23 @@ public class AuthService {
             throw new UnauthorizedException("Tài khoản chưa được kích hoạt qua OTP!");
         }
 
-        String jwt = jwtUtils.generateTokenFromUsername(user.getUsername());
+        String accessToken = jwtUtils.generateTokenFromUsername(user.getUsername(), user.getId());
+        String refreshToken = refreshTokenService.createRefreshToken(user).getToken();
 
-        return new AuthResponse(jwt, user.getUsername(), user.getEmail());
+        return new AuthResponse(accessToken, refreshToken, user.getUsername());
+    }
+
+    @Transactional
+    public AuthResponse refreshAccessToken(String refreshToken) {
+        var newRefreshToken = refreshTokenService.verifyAndRotate(refreshToken);
+        User user = newRefreshToken.getUser();
+
+        String accessToken = jwtUtils.generateTokenFromUsername(user.getUsername(), user.getId());
+        return new AuthResponse(accessToken, newRefreshToken.getToken(), user.getUsername());
+    }
+
+    @Transactional
+    public void logout(Long userId) {
+        refreshTokenService.revokeAllUserTokens(userId);
     }
 }
