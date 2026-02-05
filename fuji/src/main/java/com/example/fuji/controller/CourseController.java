@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.fuji.dto.request.CourseRequestDTO;
+import com.example.fuji.dto.request.CourseUpdateDTO;
 import com.example.fuji.dto.response.ApiResponse;
 import com.example.fuji.dto.response.CourseResponseDTO;
 import com.example.fuji.exception.BadRequestException;
@@ -154,6 +155,53 @@ public class CourseController {
                 .success(true)
                 .message("Lấy thông tin khóa học thành công")
                 .data(course)
+                .build()
+        );
+    }
+
+    @PatchMapping(value = "/{id}", consumes = "multipart/form-data")
+    @Operation(summary = "Cập nhật thông tin khóa học (Partial Update)")
+    public ResponseEntity<ApiResponse<CourseResponseDTO>> updateCourse(
+            @PathVariable Long id,
+            @RequestPart("course") String courseJson,
+            @RequestPart(value = "thumbnail", required = false) MultipartFile thumbnail) {
+
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            CourseUpdateDTO updateDTO = objectMapper.readValue(courseJson, CourseUpdateDTO.class);
+
+            // Validate fields if present
+            Set<ConstraintViolation<CourseUpdateDTO>> violations = validator.validate(updateDTO);
+            if (!violations.isEmpty()) {
+                String errorMessage = violations.stream()
+                    .map(v -> v.getPropertyPath() + ": " + v.getMessage())
+                    .reduce((a, b) -> a + "; " + b)
+                    .orElse("Validation failed");
+                throw new BadRequestException(errorMessage);
+            }
+
+            CourseResponseDTO updatedCourse = courseService.updateCourse(id, updateDTO, thumbnail);
+
+            return ResponseEntity.ok(
+                ApiResponse.<CourseResponseDTO>builder()
+                    .success(true)
+                    .message("Cập nhật khóa học thành công")
+                    .data(updatedCourse)
+                    .build()
+            );
+        } catch (IOException e) {
+            throw new BadRequestException("JSON không hợp lệ: " + e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Xóa khóa học")
+    public ResponseEntity<ApiResponse<Void>> deleteCourse(@PathVariable Long id) {
+        courseService.deleteCourse(id);
+        return ResponseEntity.ok(
+            ApiResponse.<Void>builder()
+                .success(true)
+                .message("Xóa khóa học thành công")
                 .build()
         );
     }

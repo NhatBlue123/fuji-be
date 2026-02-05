@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.fuji.dto.request.CourseRequestDTO;
+import com.example.fuji.dto.request.CourseUpdateDTO;
 import com.example.fuji.dto.request.MediaDTO;
 import com.example.fuji.dto.response.CourseResponseDTO;
 import com.example.fuji.dto.response.UserSummaryDTO;
@@ -123,6 +124,52 @@ public class CourseService {
         return convertToDTO(savedCourse);
     }
 
+
+    @Transactional
+    public CourseResponseDTO updateCourse(Long id, CourseUpdateDTO updates, MultipartFile thumbnail) {
+        Course course = courseRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Khóa học không tồn tại với id: " + id));
+
+        // Update fields if present (PATCH logic)
+        if (updates.getTitle() != null && !updates.getTitle().isBlank()) {
+            course.setTitle(updates.getTitle());
+        }
+        if (updates.getDescription() != null && !updates.getDescription().isBlank()) {
+            course.setDescription(updates.getDescription());
+        }
+        if (updates.getPrice() != null) {
+            course.setPrice(updates.getPrice());
+        }
+        if (updates.getIsPublished() != null) {
+            course.setIsPublished(updates.getIsPublished());
+        }
+        if (updates.getInstructorId() != null) {
+            User newInstructor = userRepository.findById(updates.getInstructorId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Giảng viên không tồn tại với id: " + updates.getInstructorId()));
+            course.setInstructor(newInstructor);
+        }
+
+        // Upload new thumbnail if provided
+        if (thumbnail != null && !thumbnail.isEmpty()) {
+            try {
+                MediaDTO uploadResult = mediaService.uploadImage(thumbnail);
+                course.setThumbnailUrl(uploadResult.getUrl());
+            } catch (IOException e) {
+                throw new RuntimeException("Upload ảnh thumbnail thất bại: " + e.getMessage(), e);
+            }
+        }
+
+        Course updatedCourse = courseRepository.save(course);
+        return convertToDTO(updatedCourse);
+    }
+
+    @Transactional
+    public void deleteCourse(Long id) {
+        if (!courseRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Khóa học không tồn tại với id: " + id);
+        }
+        courseRepository.deleteById(id);
+    }
 
     private CourseResponseDTO convertToDTO(Course course) {
         // Build instructor summary
