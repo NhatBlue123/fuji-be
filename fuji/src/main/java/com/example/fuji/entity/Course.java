@@ -10,7 +10,12 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 @Entity
-@Table(name = "courses")
+@Table(name = "courses", indexes = {
+    @Index(name = "idx_instructor_id", columnList = "instructor_id"),
+    @Index(name = "idx_is_published", columnList = "is_published"),
+    @Index(name = "idx_created_at", columnList = "created_at"),
+    @Index(name = "idx_instructor_published", columnList = "instructor_id, is_published")
+})
 @Data
 public class Course {
 
@@ -67,13 +72,3 @@ public class Course {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 }
-//các thuộc tính của @column:
-/*
-    name: Tên của cột trong bảng cơ sở dữ liệu.
-    nullable: Xác định xem cột có thể chứa giá trị NULL hay không.
-    length: Độ dài tối đa của chuỗi (áp dụng cho các kiểu dữ liệu chuỗi như VARCHAR).
-    unique: Xác định xem giá trị trong cột có phải là duy nhất hay không.
-    columnDefinition: Định nghĩa SQL tùy chỉnh cho cột.
-    insertable: Xác định xem cột có được bao gồm trong các câu lệnh INSERT hay không.
-    updatable: Xác định xem cột có được bao gồm trong các câu lệnh UPDATE hay không.
- */
