@@ -3,6 +3,7 @@ package com.example.fuji.controller;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,6 +29,7 @@ import lombok.RequiredArgsConstructor;
 public class AuthController {
 
     private final AuthService authService;
+    private final com.example.fuji.utils.AuthUtils authUtils;
 
     @PostMapping("/register")
     @Operation(summary = "Đăng ký tài khoản mới")
@@ -68,14 +70,31 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success("Đăng nhập thành công", authData));
     }
 
+
+
+    @PostMapping("/refresh")
+    @Operation(summary = "Làm mới access token")
+    public ResponseEntity<ApiResponse<AuthResponse>> refresh(
+            @CookieValue(name = "refreshToken", required = false) String cookieToken,
+            @RequestBody(required = false) java.util.Map<String, String> body) {
+
+        // Ưu tiên cookie, fallback sang body
+        String refreshToken = cookieToken != null ? cookieToken :
+                             (body != null ? body.get("refreshToken") : null);
+
+        if (refreshToken == null) {
+            throw new com.example.fuji.exception.UnauthorizedException("Refresh token không được cung cấp");
+        }
+
+        AuthResponse response = authService.refreshAccessToken(refreshToken);
+        return ResponseEntity.ok(ApiResponse.success("Làm mới token thành công", response));
+    }
+
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(HttpServletResponse response) {
-        ResponseCookie deleteAccess = ResponseCookie.from("accessToken", "").maxAge(0).path("/").build();
-        ResponseCookie deleteRefresh = ResponseCookie.from("refreshToken", "").maxAge(0).path("/").build();
-
-        response.addHeader(HttpHeaders.SET_COOKIE, deleteAccess.toString());
-        response.addHeader(HttpHeaders.SET_COOKIE, deleteRefresh.toString());
-
-        return ResponseEntity.ok("Đăng xuất thành công");
+    @Operation(summary = "Đăng xuất")
+    public ResponseEntity<ApiResponse<String>> logout() {
+        Long userId = authUtils.getCurrentUserId();
+        authService.logout(userId);
+        return ResponseEntity.ok(ApiResponse.success("Đăng xuất thành công"));
     }
 }

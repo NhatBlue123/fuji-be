@@ -12,7 +12,7 @@ import lombok.Data;
     @Index(name = "idx_is_active", columnList = "is_active")
 })
 @Data
-public class User {
+public class User { 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -28,6 +28,10 @@ public class User {
 
     @Column(name = "full_name")
     private String fullName;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private com.example.fuji.enums.Role role = com.example.fuji.enums.Role.STUDENT;
 
     @Column(name = "is_active")
     private Boolean isActive = false;

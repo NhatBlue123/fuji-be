@@ -2,7 +2,6 @@ package com.example.fuji.service;
 
 import java.time.LocalDateTime;
 import java.util.Random;
-import java.util.UUID;
 
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -17,13 +16,11 @@ import com.example.fuji.dto.request.RegisterDTO;
 import com.example.fuji.dto.response.AuthResponse;
 import com.example.fuji.entity.Otp;
 import com.example.fuji.entity.User;
-import com.example.fuji.entity.UserSession;
 import com.example.fuji.exception.ConflictException;
 import com.example.fuji.exception.ResourceNotFoundException;
 import com.example.fuji.exception.UnauthorizedException;
 import com.example.fuji.repository.OtpRepository;
 import com.example.fuji.repository.UserRepository;
-import com.example.fuji.repository.UserSessionRepository;
 import com.example.fuji.utils.JwtUtils;
 
 import lombok.RequiredArgsConstructor;
@@ -40,7 +37,7 @@ public class AuthService {
     private final EmailService emailService;
     private final AuthenticationManager authenticationManager;
     private final JwtUtils jwtUtils;
-    private final UserSessionRepository userSessionRepository;
+    private final RefreshTokenService refreshTokenService;
 
     @Transactional
     public String register(RegisterDTO request) {
@@ -95,8 +92,7 @@ public class AuthService {
 
     public AuthResponse login(AuthDTO authRequest) {
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(authRequest.getUsername(), authRequest.getPassword())
-        );
+                new UsernamePasswordAuthenticationToken(authRequest.getUsername(), authRequest.getPassword()));
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
@@ -107,15 +103,23 @@ public class AuthService {
             throw new UnauthorizedException("Tài khoản chưa được kích hoạt qua OTP!");
         }
 
-        String jwt = jwtUtils.generateTokenFromUsername(user.getUsername());
-        String refreshToken = UUID.randomUUID().toString();
+        String accessToken = jwtUtils.generateTokenFromUsername(user.getUsername(), user.getId());
+        String refreshToken = refreshTokenService.createRefreshToken(user).getToken();
 
-        UserSession session = new UserSession();
-        session.setUser(user);
-        session.setSessionToken(refreshToken);
-        session.setExpiresAt(LocalDateTime.now().plusDays(7)); 
-        userSessionRepository.save(session);
+        return new AuthResponse(accessToken, refreshToken, user.getUsername(), user.getEmail());
+    }
 
-        return new AuthResponse(jwt, refreshToken, user.getUsername(), user.getEmail());
+    @Transactional
+    public AuthResponse refreshAccessToken(String refreshToken) {
+        var newRefreshToken = refreshTokenService.verifyAndRotate(refreshToken);
+        User user = newRefreshToken.getUser();
+
+        String accessToken = jwtUtils.generateTokenFromUsername(user.getUsername(), user.getId());
+        return new AuthResponse(accessToken, newRefreshToken.getToken(), user.getUsername(), user.getEmail());
+    }
+
+    @Transactional
+    public void logout(Long userId) {
+        refreshTokenService.revokeAllUserTokens(userId);
     }
 }

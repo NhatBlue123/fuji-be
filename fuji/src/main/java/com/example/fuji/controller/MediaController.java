@@ -4,6 +4,8 @@ import com.example.fuji.dto.request.MediaDTO;
 import com.example.fuji.dto.response.ApiResponse;
 import com.example.fuji.exception.BadRequestException;
 import com.example.fuji.service.MediaService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +16,8 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping("/api/media")
 @RequiredArgsConstructor
 @Slf4j
+@Tag(name = "Media", description = "API quản lý media (upload/delete)")
+@SecurityRequirement(name = "bearerAuth") 
 public class MediaController {
 
     private final MediaService mediaService;

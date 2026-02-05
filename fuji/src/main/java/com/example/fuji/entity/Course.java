@@ -12,6 +12,7 @@ import lombok.Data;
 @Entity
 @Table(name = "courses", indexes = {
     @Index(name = "idx_instructor_id", columnList = "instructor_id"),
+    @Index(name = "idx_created_by", columnList = "created_by"),
     @Index(name = "idx_is_published", columnList = "is_published"),
     @Index(name = "idx_created_at", columnList = "created_at"),
     @Index(name = "idx_instructor_published", columnList = "instructor_id, is_published")
@@ -39,6 +40,17 @@ public class Course {
         )
     )
     private User instructor;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+        name = "created_by",
+        nullable = false,
+        foreignKey = @ForeignKey(
+            name = "fk_courses_created_by",
+            foreignKeyDefinition = "FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE RESTRICT"
+        )
+    )
+    private User createdBy;
 
     @Column(name = "thumbnail_url", length = 500)
     private String thumbnailUrl;
