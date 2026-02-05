@@ -40,7 +40,7 @@ public class AuthService {
     private final EmailService emailService;
     private final AuthenticationManager authenticationManager;
     private final JwtUtils jwtUtils;
-    private final UserSessionRepository userSessionRepository;
+    private final RefreshTokenService refreshTokenService;
 
     @Transactional
     public String register(RegisterDTO request) {
@@ -107,15 +107,23 @@ public class AuthService {
             throw new UnauthorizedException("Tài khoản chưa được kích hoạt qua OTP!");
         }
 
-        String jwt = jwtUtils.generateTokenFromUsername(user.getUsername());
-        String refreshToken = UUID.randomUUID().toString();
+        String accessToken = jwtUtils.generateTokenFromUsername(user.getUsername(), user.getId());
+        String refreshToken = refreshTokenService.createRefreshToken(user).getToken();
 
-        UserSession session = new UserSession();
-        session.setUser(user);
-        session.setSessionToken(refreshToken);
-        session.setExpiresAt(LocalDateTime.now().plusDays(7)); 
-        userSessionRepository.save(session);
+        return new AuthResponse(accessToken, refreshToken, user.getUsername());
+    }
 
-        return new AuthResponse(jwt, refreshToken, user.getUsername(), user.getEmail());
+    @Transactional
+    public AuthResponse refreshAccessToken(String refreshToken) {
+        var newRefreshToken = refreshTokenService.verifyAndRotate(refreshToken);
+        User user = newRefreshToken.getUser();
+
+        String accessToken = jwtUtils.generateTokenFromUsername(user.getUsername(), user.getId());
+        return new AuthResponse(accessToken, newRefreshToken.getToken(), user.getUsername());
+    }
+
+    @Transactional
+    public void logout(Long userId) {
+        refreshTokenService.revokeAllUserTokens(userId);
     }
 }
