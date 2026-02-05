@@ -26,13 +26,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
+        String jwt = null;
+
+        // ✅ CHỈ đọc access token từ Authorization header
         String authHeader = request.getHeader("Authorization");
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            jwt = authHeader.substring(7);
+        }
+
+
+
+        if (jwt == null) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        String jwt = authHeader.substring(7);
         if (jwtUtils.validateJwtToken(jwt)) {
             Long userId = jwtUtils.getUserIdFromJwtToken(jwt);
             String username = jwtUtils.getUserNameFromJwtToken(jwt);
