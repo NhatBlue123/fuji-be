@@ -11,8 +11,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.example.fuji.dto.request.CourseDTO;
+import com.example.fuji.dto.request.CourseRequestDTO;
 import com.example.fuji.dto.request.MediaDTO;
+import com.example.fuji.dto.response.CourseResponseDTO;
+import com.example.fuji.dto.response.UserSummaryDTO;
 import com.example.fuji.entity.Course;
 import com.example.fuji.entity.User;
 import com.example.fuji.exception.ResourceNotFoundException;
@@ -32,7 +34,7 @@ public class CourseService {
     private final AuthUtils authUtils;
 
     @Transactional(readOnly = true)
-    public Page<CourseDTO> getAllCourses(int page, int size, String sortBy, String sortDir) {
+    public Page<CourseResponseDTO> getAllCourses(int page, int size, String sortBy, String sortDir) {
         Sort sort = sortDir.equalsIgnoreCase("asc")
             ? Sort.by(sortBy).ascending()
             : Sort.by(sortBy).descending();
@@ -44,7 +46,7 @@ public class CourseService {
     }
 
     @Transactional(readOnly = true)
-    public Page<CourseDTO> getPublishedCourses(int page, int size, String sortBy, String sortDir) {
+    public Page<CourseResponseDTO> getPublishedCourses(int page, int size, String sortBy, String sortDir) {
         Sort sort = sortDir.equalsIgnoreCase("asc")
             ? Sort.by(sortBy).ascending()
             : Sort.by(sortBy).descending();
@@ -56,7 +58,7 @@ public class CourseService {
     }
 
     @Transactional(readOnly = true)
-    public Page<CourseDTO> getCoursesByInstructor(Long instructorId, int page, int size) {
+    public Page<CourseResponseDTO> getCoursesByInstructor(Long instructorId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         Page<Course> courses = courseRepository.findByInstructorId(instructorId, pageable);
 
@@ -64,7 +66,7 @@ public class CourseService {
     }
 
     @Transactional(readOnly = true)
-    public Page<CourseDTO> searchCourses(String keyword, int page, int size) {
+    public Page<CourseResponseDTO> searchCourses(String keyword, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         Page<Course> courses = courseRepository.searchByTitle(keyword, pageable);
 
@@ -72,14 +74,14 @@ public class CourseService {
     }
 
     @Transactional(readOnly = true)
-    public CourseDTO getCourseById(Long id) {
+    public CourseResponseDTO getCourseById(Long id) {
         Course course = courseRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Khóa học không tồn tại với id: " + id));
         return convertToDTO(course);
     }
 
     @Transactional
-    public CourseDTO createCourse(CourseDTO courseDTO, MultipartFile thumbnail) {
+    public CourseResponseDTO createCourse(CourseRequestDTO courseDTO, MultipartFile thumbnail) {
         // Get current logged-in user as creator (tương tự req.user trong Node.js)
         User creator = authUtils.getCurrentUser();
 
@@ -122,15 +124,29 @@ public class CourseService {
     }
 
 
-    private CourseDTO convertToDTO(Course course) {
-        return CourseDTO.builder()
+    private CourseResponseDTO convertToDTO(Course course) {
+        // Build instructor summary
+        UserSummaryDTO instructorSummary = UserSummaryDTO.builder()
+                .id(course.getInstructor().getId())
+                .username(course.getInstructor().getUsername())
+                .fullName(course.getInstructor().getFullName())
+                .avatarUrl(course.getInstructor().getAvatarUrl())
+                .build();
+
+        // Build author summary
+        UserSummaryDTO authorSummary = UserSummaryDTO.builder()
+                .id(course.getCreatedBy().getId())
+                .username(course.getCreatedBy().getUsername())
+                .fullName(course.getCreatedBy().getFullName())
+                .avatarUrl(course.getCreatedBy().getAvatarUrl())
+                .build();
+
+        return CourseResponseDTO.builder()
                 .id(course.getId())
                 .title(course.getTitle())
                 .description(course.getDescription())
-                .instructorId(course.getInstructor().getId())
-                .instructorName(course.getInstructor().getFullName())
-                .createdById(course.getCreatedBy().getId())
-                .createdByName(course.getCreatedBy().getFullName())
+                .instructor(instructorSummary)
+                .author(authorSummary)
                 .thumbnailUrl(course.getThumbnailUrl())
                 .price(course.getPrice())
                 .studentCount(course.getStudentCount())
