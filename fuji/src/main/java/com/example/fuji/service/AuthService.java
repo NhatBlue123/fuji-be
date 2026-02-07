@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.fuji.dto.request.AuthDTO;
 import com.example.fuji.dto.request.RegisterDTO;
+import com.example.fuji.dto.request.SendOtpRegisterDTO;
 import com.example.fuji.dto.response.AuthResponse;
 import com.example.fuji.entity.Otp;
 import com.example.fuji.entity.User;
@@ -39,25 +40,25 @@ public class AuthService {
     private final JwtUtils jwtUtils;
     private final RefreshTokenService refreshTokenService;
 
+    /**
+     * Gửi OTP cho đăng ký - validate đầy đủ thông tin trước khi gửi
+     * KHÔNG tạo user, KHÔNG lưu thông tin đăng ký
+     */
     @Transactional
-    public String register(RegisterDTO request) {
-        log.info("Registering user: {}, Email: {}", request.getUsername(), request.getEmail());
+    public void sendOtpForRegistration(SendOtpRegisterDTO request) {
+        log.info("📧 Gửi OTP đăng ký cho email: {}", request.getEmail());
 
+        // Check email đã tồn tại
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new ConflictException("Email đã tồn tại!");
         }
+
+        // Check username đã tồn tại
         if (userRepository.existsByUsername(request.getUsername())) {
-            throw new ConflictException("Username đã tồn tại!");
+            throw new ConflictException("Tên đăng nhập đã tồn tại!");
         }
 
-        User user = new User();
-        user.setUsername(request.getUsername());
-        user.setEmail(request.getEmail());
-        user.setFullName(request.getFullName());
-        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
-        user.setIsActive(false);
-        userRepository.save(user);
-
+        // Tạo và gửi OTP
         String otpCode = String.valueOf(new Random().nextInt(900000) + 100000);
         Otp otp = new Otp();
         otp.setEmail(request.getEmail());
@@ -66,28 +67,64 @@ public class AuthService {
         otpRepository.save(otp);
 
         emailService.sendOtpEmail(request.getEmail(), otpCode);
-
-        return "Đăng ký thành công. Vui lòng kiểm tra email để nhận OTP.";
     }
 
+    /**
+     * Đăng ký tài khoản - nhận đầy đủ thông tin + OTP
+     * Verify OTP trước → validate thông tin → tạo user (active ngay)
+     */
     @Transactional
-    public String verifyOtp(String email, String code) {
-        Otp otp = otpRepository.findByEmailAndOtpCode(email, code)
-                .orElseThrow(() -> new ResourceNotFoundException("Mã OTP không chính xác!"));
+    public String register(RegisterDTO request) {
+        log.info("Đăng ký user: {}, Email: {}", request.getUsername(), request.getEmail());
+
+        // 1. Verify OTP trước
+        Otp otp = otpRepository.findByEmailAndOtpCode(request.getEmail(), request.getOtpCode())
+                .orElseThrow(() -> new UnauthorizedException("Mã OTP không chính xác!"));
 
         if (otp.getExpiresAt().isBefore(LocalDateTime.now())) {
             otpRepository.delete(otp);
             throw new UnauthorizedException("Mã OTP đã hết hạn!");
         }
 
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng!"));
+        // 2. Validate thông tin
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new ConflictException("Email đã tồn tại!");
+        }
+        if (userRepository.existsByUsername(request.getUsername())) {
+            throw new ConflictException("Username đã tồn tại!");
+        }
 
+        // 3. Tạo user - active ngay vì đã verify OTP
+        User user = new User();
+        user.setUsername(request.getUsername());
+        user.setEmail(request.getEmail());
+        user.setFullName(request.getFullName());
+        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setIsActive(true);
         userRepository.save(user);
+
+        // 4. Xóa OTP đã sử dụng
         otpRepository.delete(otp);
 
-        return "Xác thực thành công! Bạn hiện có thể đăng nhập.";
+        log.info("🎉 Đăng ký thành công cho user: {}", request.getUsername());
+        return "Đăng ký thành công! Bạn có thể đăng nhập ngay.";
+    }
+
+    /**
+     * Xác thực OTP (dùng cho verify email, forgot password, v.v.)
+     */
+    @Transactional
+    public String verifyOtp(String email, String otpCode) {
+        Otp otp = otpRepository.findByEmailAndOtpCode(email, otpCode)
+                .orElseThrow(() -> new UnauthorizedException("Mã OTP không chính xác!"));
+
+        if (otp.getExpiresAt().isBefore(LocalDateTime.now())) {
+            otpRepository.delete(otp);
+            throw new UnauthorizedException("Mã OTP đã hết hạn!");
+        }
+
+        otpRepository.delete(otp);
+        return "Xác thực OTP thành công!";
     }
 
     public AuthResponse login(AuthDTO authRequest) {

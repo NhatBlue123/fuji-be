@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.*;
 
 import com.example.fuji.dto.request.AuthDTO;
 import com.example.fuji.dto.request.RegisterDTO;
+import com.example.fuji.dto.request.SendOtpRegisterDTO;
 import com.example.fuji.dto.request.VerifyOtpDTO;
 import com.example.fuji.dto.response.ApiResponse;
 import com.example.fuji.dto.response.AuthResponse;
@@ -16,18 +17,28 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 @Tag(name = "Authentication", description = "API xác thực người dùng")
+@Slf4j
 public class AuthController {
 
     private final AuthService authService;
     private final com.example.fuji.utils.AuthUtils authUtils;
 
+    @PostMapping("/send-otp-register")
+    @Operation(summary = "Validate thông tin + Gửi OTP để đăng ký - KHÔNG tạo tài khoản")
+    public ResponseEntity<ApiResponse<String>> sendOtpForRegistration(
+            @Valid @RequestBody SendOtpRegisterDTO request) {
+        authService.sendOtpForRegistration(request);
+        return ResponseEntity.ok(ApiResponse.success("OTP đã được gửi đến email " + request.getEmail()));
+    }
+
     @PostMapping("/register")
-    @Operation(summary = "Đăng ký tài khoản mới")
+    @Operation(summary = "Đăng ký tài khoản - gửi đầy đủ thông tin + OTP")
     public ResponseEntity<ApiResponse<String>> register(@Valid @RequestBody RegisterDTO request) {
         String message = authService.register(request);
         return ResponseEntity.ok(ApiResponse.success(message));

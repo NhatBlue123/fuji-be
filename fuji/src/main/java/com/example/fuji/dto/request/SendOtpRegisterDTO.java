@@ -1,13 +1,17 @@
 package com.example.fuji.dto.request;
+
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * DTO cho bước gửi OTP đăng ký - validate đầy đủ thông tin trước khi gửi OTP
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class RegisterDTO {
+public class SendOtpRegisterDTO {
 
     @NotBlank(message = "Tên đăng nhập không được để trống")
     @Size(min = 3, max = 30, message = "Tên đăng nhập phải từ 3 đến 30 ký tự")
@@ -24,7 +28,4 @@ public class RegisterDTO {
     @NotBlank(message = "Họ tên không được để trống")
     @Size(min = 2, max = 50, message = "Họ tên phải từ 2 đến 50 ký tự")
     private String fullName;
-
-    @NotBlank(message = "Mã OTP không được để trống")
-    private String otpCode;
 }

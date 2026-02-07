@@ -26,13 +26,18 @@ public class GlobalExceptionHandler {
             errors.put(fieldName, errorMessage);
         });
 
-        log.error("Validation error: {}", errors);
+        log.error("🔍 VALIDATION ERROR: {}", errors);
+
+        // Tạo message chi tiết từ các lỗi validation
+        String detailMessage = errors.values().stream()
+                .findFirst()
+                .orElse("Dữ liệu đầu vào không hợp lệ");
 
         ErrorResponse response = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.BAD_REQUEST.value())
                 .error("Validation Failed")
-                .message("Dữ liệu đầu vào không hợp lệ")
+                .message(detailMessage)
                 .errors(errors)
                 .build();
 
@@ -102,6 +107,13 @@ public class GlobalExceptionHandler {
         log.error("=== INTERNAL SERVER ERROR (500) ===");
         log.error("Error type: {}", ex.getClass().getName());
         log.error("Error message: {}", ex.getMessage());
+
+        // Special handling for Spring Security BadCredentialsException
+        if (ex.getClass().getName().contains("BadCredentialsException")) {
+            log.error("🔍 BAD CREDENTIALS EXCEPTION CAUGHT!");
+            log.error("This usually means username/password is wrong in LOGIN request");
+        }
+
         log.error("Stack trace:", ex);
 
         // format cho thông tin lỗi
