@@ -16,34 +16,34 @@ public class EmailService {
 
     public void sendOtpEmail(String toEmail, String otpCode) {
         log.info("📧 Đang gửi OTP đến email: {}", toEmail);
-        
+
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            
+
             helper.setFrom("nguyennhat082004@gmail.com");
             helper.setTo(toEmail);
             helper.setSubject("🔐 Mã xác thực OTP - FUJI");
-            
+
             // Dùng plain text thay vì HTML để test
             String plainText = String.format("""
                 FUJI - Nền tảng học tiếng Nhật số 1 Việt Nam
-                
+
                 Xin chào!
-                
+
                 Mã xác thực OTP của bạn là: %s
-                
+
                 Mã này sẽ hết hạn sau 5 phút.
                 Vui lòng không chia sẻ mã này với bất kỳ ai.
-                
+
                 Nếu bạn không yêu cầu mã này, vui lòng bỏ qua email này.
-                
+
                 ---
                 © 2026 FUJI. All rights reserved.
                 """, otpCode);
-            
+
             helper.setText(plainText, false);
-            
+
             mailSender.send(message);
             log.info("✅ Email OTP đã gửi thành công đến: {} - OTP: {}", toEmail, otpCode);
         } catch (MessagingException e) {
@@ -54,7 +54,7 @@ public class EmailService {
             throw new RuntimeException("Không thể gửi email xác thực. Vui lòng thử lại sau.");
         }
     }
-    
+
     private String buildOtpEmailTemplate(String otpCode) {
         return """
             <!DOCTYPE html>
@@ -80,7 +80,7 @@ public class EmailService {
                                         <p style="margin: 10px 0 0 0; color: rgba(255,255,255,0.9); font-size: 14px; font-weight: 500;">Nền tảng học tiếng Nhật số 1 Việt Nam</p>
                                     </td>
                                 </tr>
-                                
+
                                 <!-- Content -->
                                 <tr>
                                     <td style="padding: 40px 30px;">
@@ -89,7 +89,7 @@ public class EmailService {
                                             Chào bạn! 👋<br><br>
                                             Cảm ơn bạn đã đăng ký tài khoản FUJI. Để hoàn tất đăng ký, vui lòng sử dụng mã OTP bên dưới:
                                         </p>
-                                        
+
                                         <!-- OTP Box -->
                                         <div style="background: linear-gradient(135deg, #667eea 0%%, #764ba2 100%%); border-radius: 15px; padding: 30px; text-align: center; margin: 30px 0;">
                                             <p style="margin: 0 0 10px 0; color: rgba(255,255,255,0.9); font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Mã xác thực của bạn</p>
@@ -97,20 +97,20 @@ public class EmailService {
                                                 <span style="font-size: 36px; font-weight: 800; color: #667eea; letter-spacing: 8px; font-family: 'Courier New', monospace;">%s</span>
                                             </div>
                                         </div>
-                                        
+
                                         <!-- Warning Box -->
                                         <div style="background: #fff5f5; border-left: 4px solid #fc8181; padding: 15px 20px; border-radius: 8px; margin: 30px 0;">
                                             <p style="margin: 0; color: #c53030; font-size: 14px; line-height: 1.6;">
                                                 ⏰ <strong>Lưu ý:</strong> Mã OTP này sẽ hết hạn sau <strong>5 phút</strong>. Vui lòng không chia sẻ mã này với bất kỳ ai.
                                             </p>
                                         </div>
-                                        
+
                                         <p style="margin: 30px 0 0 0; color: #718096; font-size: 14px; line-height: 1.6;">
                                             Nếu bạn không yêu cầu mã này, vui lòng bỏ qua email này.
                                         </p>
                                     </td>
                                 </tr>
-                                
+
                                 <!-- Footer -->
                                 <tr>
                                     <td style="background: #f7fafc; padding: 30px; text-align: center; border-top: 1px solid #e2e8f0;">
