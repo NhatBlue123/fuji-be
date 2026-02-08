@@ -45,11 +45,27 @@ public class AuthController {
 
     @PostMapping("/login")
     @Operation(summary = "Đăng nhập")
-    public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody AuthDTO authRequest, HttpServletResponse response) {
+    public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody AuthDTO authRequest,
+            HttpServletResponse response) {
         AuthResponse authData = authService.login(authRequest);
+        setAuthCookies(response, authData);
+        return ResponseEntity.ok(ApiResponse.success("Đăng nhập thành công", authData));
+    }
+
+    @PostMapping("/oauth2/verify-otp")
+    @Operation(summary = "Xác thực OTP sau Google Login")
+    public ResponseEntity<ApiResponse<AuthResponse>> verifyOAuth2(
+            @Valid @RequestBody com.example.fuji.dto.request.OAuth2VerifyOtpRequest request,
+            HttpServletResponse response) {
+        AuthResponse authData = authService.verifyOAuth2Otp(request.getSessionId(), request.getOtpCode());
+        setAuthCookies(response, authData);
+        return ResponseEntity.ok(ApiResponse.success("Xác thực Google thành công", authData));
+    }
+
+    private void setAuthCookies(HttpServletResponse response, AuthResponse authData) {
         ResponseCookie accessCookie = ResponseCookie.from("accessToken", authData.getAccessToken())
                 .httpOnly(true)
-                .secure(false)
+                .secure(false) // Set true in production
                 .path("/")
                 .maxAge(60 * 60)
                 .sameSite("Lax")
@@ -57,15 +73,14 @@ public class AuthController {
 
         ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", authData.getRefreshToken())
                 .httpOnly(true)
-                .secure(false)
+                .secure(false) // Set true in production
                 .path("/")
-                .maxAge(7 * 24 * 60 * 60) // 7 ngày
+                .maxAge(7 * 24 * 60 * 60)
                 .sameSite("Lax")
                 .build();
 
         response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
         response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
-        return ResponseEntity.ok(ApiResponse.success("Đăng nhập thành công", authData));
     }
 
     @PostMapping("/logout")

@@ -7,9 +7,9 @@ import lombok.Data;
 
 @Entity
 @Table(name = "users", indexes = {
-    @Index(name = "idx_email", columnList = "email", unique = true),
-    @Index(name = "idx_username", columnList = "username", unique = true),
-    @Index(name = "idx_is_active", columnList = "is_active")
+        @Index(name = "idx_email", columnList = "email", unique = true),
+        @Index(name = "idx_username", columnList = "username", unique = true),
+        @Index(name = "idx_is_active", columnList = "is_active")
 })
 @Data
 public class User {
@@ -34,6 +34,12 @@ public class User {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @Column(name = "google_id", unique = true)
+    private String googleId;
+
+    @Column(name = "last_login")
+    private LocalDateTime lastLogin;
 
     @PrePersist
     protected void onCreate() {
