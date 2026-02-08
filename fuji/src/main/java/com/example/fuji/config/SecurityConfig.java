@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -22,6 +23,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.example.fuji.filter.JwtAuthenticationFilter;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 @Configuration
 @EnableWebSecurity
@@ -29,6 +32,10 @@ import com.example.fuji.filter.JwtAuthenticationFilter;
 public class SecurityConfig {
     @Autowired
     private JwtAuthenticationFilter jwtAuthFilter;
+
+    @Autowired
+    @Lazy
+    private OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -38,49 +45,53 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
-            .csrf(csrf -> csrf.disable())
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/api/media/**").permitAll()
-                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                .requestMatchers("/actuator/**").permitAll()
-                .anyRequest().authenticated()
-            ).cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .formLogin(form -> form.disable())
-            .httpBasic(basic -> basic.disable())
-            .exceptionHandling(ex -> ex
-                .accessDeniedHandler((request, response, accessDeniedException) -> {
-                    log.error("=== 403 ACCESS DENIED ===");
-                    log.error("URL: {}", request.getRequestURL());
-                    log.error("Method: {}", request.getMethod());
-                    log.error("Error: {}", accessDeniedException.getMessage());
+                .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/media/**").permitAll()
+                        .requestMatchers("/login/**", "/oauth2/**").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers("/actuator/**").permitAll()
+                        .anyRequest().authenticated())
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .formLogin(form -> form.disable())
+                .httpBasic(basic -> basic.disable())
+                .oauth2Login(oauth2 -> oauth2
+                        .successHandler(oAuth2LoginSuccessHandler)
+                        .failureHandler((request, response, exception) -> {
+                            log.error("OAuth2 Login Failed: {}", exception.getMessage());
+                            response.sendRedirect("http://localhost:3000/login?error=oauth2_failed");
+                        }))
+                .exceptionHandling(ex -> ex
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            log.error("=== 403 ACCESS DENIED ===");
+                            log.error("URL: {}", request.getRequestURL());
+                            log.error("Method: {}", request.getMethod());
+                            log.error("Error: {}", accessDeniedException.getMessage());
 
-                    response.setStatus(403);
-                    response.setContentType("application/json;charset=UTF-8");
-                    String json = String.format(
-                        "{\"timestamp\":\"%s\",\"status\":403,\"error\":\"Forbidden\",\"message\":\"Bạn không có quyền truy cập tài nguyên này\"}",
-                        java.time.LocalDateTime.now()
-                    );
-                    response.getWriter().write(json);
-                })
-                .authenticationEntryPoint((request, response, authException) -> {
-                    log.error("=== 401 UNAUTHORIZED ===");
-                    log.error("URL: {}", request.getRequestURL());
-                    log.error("Method: {}", request.getMethod());
-                    log.error("Error: {}", authException.getMessage());
+                            response.setStatus(403);
+                            response.setContentType("application/json;charset=UTF-8");
+                            String json = String.format(
+                                    "{\"timestamp\":\"%s\",\"status\":403,\"error\":\"Forbidden\",\"message\":\"Bạn không có quyền truy cập tài nguyên này\"}",
+                                    java.time.LocalDateTime.now());
+                            response.getWriter().write(json);
+                        })
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            log.error("=== 401 UNAUTHORIZED ===");
+                            log.error("URL: {}", request.getRequestURL());
+                            log.error("Method: {}", request.getMethod());
+                            log.error("Error: {}", authException.getMessage());
 
-                    response.setStatus(401);
-                    response.setContentType("application/json;charset=UTF-8");
-                    String json = String.format(
-                        "{\"timestamp\":\"%s\",\"status\":401,\"error\":\"Unauthorized\",\"message\":\"Bạn cần đăng nhập để truy cập tài nguyên này\"}",
-                        java.time.LocalDateTime.now()
-                    );
-                    response.getWriter().write(json);
-                })
-            )
-            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-            .build();
+                            response.setStatus(401);
+                            response.setContentType("application/json;charset=UTF-8");
+                            String json = String.format(
+                                    "{\"timestamp\":\"%s\",\"status\":401,\"error\":\"Unauthorized\",\"message\":\"Bạn cần đăng nhập để truy cập tài nguyên này\"}",
+                                    java.time.LocalDateTime.now());
+                            response.getWriter().write(json);
+                        }))
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .build();
     }
 
     @Bean
@@ -89,16 +100,16 @@ public class SecurityConfig {
     }
 
     @Bean
-public CorsConfigurationSource corsConfigurationSource() {
-    CorsConfiguration configuration = new CorsConfiguration();
-    configuration.setAllowedOrigins(List.of("http://localhost:3000")); 
-    configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-    configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
-    
-    configuration.setAllowCredentials(true); 
-    
-    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-    source.registerCorsConfiguration("/**", configuration);
-    return source;
-}
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(List.of("http://localhost:3000"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+
+        configuration.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
 }
