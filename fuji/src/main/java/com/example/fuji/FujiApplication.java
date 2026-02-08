@@ -10,5 +10,4 @@ public class FujiApplication {
 		SpringApplication.run(FujiApplication.class, args);
 		
 	}
-
 }
