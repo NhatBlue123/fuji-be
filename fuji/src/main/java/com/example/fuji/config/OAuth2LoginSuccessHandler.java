@@ -15,11 +15,15 @@ import org.springframework.security.web.authentication.SimpleUrlAuthenticationSu
 import org.springframework.stereotype.Component;
 import com.example.fuji.service.AuthService;
 
+import com.example.fuji.dto.response.AuthResponse;
+import com.example.fuji.dto.response.OAuth2LoginResult;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 
 @Component
 @RequiredArgsConstructor
@@ -44,11 +48,38 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
 
         log.info("OAuth2 Authenticated by Google: email={}", email);
 
-        // Process OAuth2 Login (Create pending session and send OTP)
-        String sessionId = authService.processOAuth2Login(email, googleId, name);
+        // Process OAuth2 Login
+        OAuth2LoginResult result = authService.processOAuth2Login(email, googleId, name);
 
-        // Redirect to Frontend Login Page with Session Context
-        String targetUrl = frontendUrl + "/login?session=" + sessionId + "&email=" + email;
-        getRedirectStrategy().sendRedirect(request, response, targetUrl);
+        if (result.isNeedsOtp()) {
+            // Redirect to Frontend Login Page with Session Context for OTP
+            String targetUrl = frontendUrl + "/login?session=" + result.getSessionId() + "&email=" + email;
+            getRedirectStrategy().sendRedirect(request, response, targetUrl);
+        } else {
+            // Existing user - Skip OTP, set cookies and redirect home
+            setAuthCookies(response, result.getAuthResponse());
+            getRedirectStrategy().sendRedirect(request, response, frontendUrl + "/");
+        }
+    }
+
+    private void setAuthCookies(HttpServletResponse response, AuthResponse authData) {
+        ResponseCookie accessCookie = ResponseCookie.from("accessToken", authData.getAccessToken())
+                .httpOnly(true)
+                .secure(false) // Set true in production
+                .path("/")
+                .maxAge(60 * 60)
+                .sameSite("Lax")
+                .build();
+
+        ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", authData.getRefreshToken())
+                .httpOnly(true)
+                .secure(false) // Set true in production
+                .path("/")
+                .maxAge(7 * 24 * 60 * 60)
+                .sameSite("Lax")
+                .build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
     }
 }

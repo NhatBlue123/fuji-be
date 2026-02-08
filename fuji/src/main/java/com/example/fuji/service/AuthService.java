@@ -44,13 +44,31 @@ public class AuthService {
     private final com.example.fuji.repository.OAuth2PendingSessionRepository oauth2PendingSessionRepository;
 
     @Transactional
-    public String processOAuth2Login(String email, String googleId, String name) {
+    public com.example.fuji.dto.response.OAuth2LoginResult processOAuth2Login(String email, String googleId,
+            String name) {
         log.info("Processing OAuth2 Login for: {}", email);
 
-        // Delete any existing pending sessions for this email
-        // (Optional but good for cleanliness if we had a findByEmail)
+        // Check if user exists and is active
+        java.util.Optional<User> existingUser = userRepository.findByEmail(email);
+        if (existingUser.isPresent() && existingUser.get().getIsActive()) {
+            User user = existingUser.get();
+            // Update googleId if not set
+            if (user.getGoogleId() == null) {
+                user.setGoogleId(googleId);
+                userRepository.save(user);
+            }
+            user.setLastLogin(LocalDateTime.now());
+            userRepository.save(user);
 
-        // Create pending session
+            log.info("Existing active user found for {}, skipping OTP", email);
+            return com.example.fuji.dto.response.OAuth2LoginResult.builder()
+                    .authResponse(generateAuthResponse(user))
+                    .needsOtp(false)
+                    .email(email)
+                    .build();
+        }
+
+        // Create pending session for new or inactive users
         com.example.fuji.entity.OAuth2PendingSession session = new com.example.fuji.entity.OAuth2PendingSession();
         session.setEmail(email);
         session.setGoogleId(googleId);
@@ -69,7 +87,11 @@ public class AuthService {
         // Send Email
         emailService.sendOtpEmail(email, otpCode);
 
-        return session.getSessionId();
+        return com.example.fuji.dto.response.OAuth2LoginResult.builder()
+                .sessionId(session.getSessionId())
+                .needsOtp(true)
+                .email(email)
+                .build();
     }
 
     @Transactional
