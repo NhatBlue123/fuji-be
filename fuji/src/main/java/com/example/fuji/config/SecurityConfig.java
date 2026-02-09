@@ -25,6 +25,7 @@ import com.example.fuji.filter.JwtAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
+@org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 @Slf4j
 public class SecurityConfig {
     @Autowired
