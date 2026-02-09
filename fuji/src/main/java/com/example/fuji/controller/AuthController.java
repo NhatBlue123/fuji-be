@@ -47,7 +47,8 @@ public class AuthController {
 
     @PostMapping("/login")
     @Operation(summary = "Đăng nhập")
-    public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody AuthDTO authRequest, HttpServletResponse response) {
+    public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody AuthDTO authRequest,
+            HttpServletResponse response) {
         AuthResponse authData = authService.login(authRequest);
         ResponseCookie accessCookie = ResponseCookie.from("accessToken", authData.getAccessToken())
                 .httpOnly(true)
@@ -70,8 +71,6 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success("Đăng nhập thành công", authData));
     }
 
-
-
     @PostMapping("/refresh")
     @Operation(summary = "Làm mới access token")
     public ResponseEntity<ApiResponse<AuthResponse>> refresh(
@@ -79,8 +78,7 @@ public class AuthController {
             @RequestBody(required = false) java.util.Map<String, String> body) {
 
         // Ưu tiên cookie, fallback sang body
-        String refreshToken = cookieToken != null ? cookieToken :
-                             (body != null ? body.get("refreshToken") : null);
+        String refreshToken = cookieToken != null ? cookieToken : (body != null ? body.get("refreshToken") : null);
 
         if (refreshToken == null) {
             throw new com.example.fuji.exception.UnauthorizedException("Refresh token không được cung cấp");
