@@ -1,16 +1,18 @@
 package com.example.fuji.controller;
 
+import java.io.IOException;
 import java.util.Set;
 
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BeanPropertyBindingResult;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.example.fuji.dto.request.CourseDTO;
+import com.example.fuji.dto.request.CourseRequestDTO;
+import com.example.fuji.dto.request.CourseUpdateDTO;
 import com.example.fuji.dto.response.ApiResponse;
+import com.example.fuji.dto.response.CourseResponseDTO;
+import com.example.fuji.exception.BadRequestException;
 import com.example.fuji.service.CourseService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -35,16 +37,16 @@ public class CourseController {
 
     @GetMapping
     @Operation(summary = "Lấy tất cả khóa học với phân trang")
-    public ResponseEntity<ApiResponse<Page<CourseDTO>>> getAllCourses(
+    public ResponseEntity<ApiResponse<Page<CourseResponseDTO>>> getAllCourses(
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir) {
 
-        Page<CourseDTO> courses = courseService.getAllCourses(page, size, sortBy, sortDir);
+        Page<CourseResponseDTO> courses = courseService.getAllCourses(page, size, sortBy, sortDir);
 
         return ResponseEntity.ok(
-                ApiResponse.<Page<CourseDTO>>builder()
+                ApiResponse.<Page<CourseResponseDTO>>builder()
                         .success(true)
                         .message("Lấy danh sách khóa học thành công")
                         .data(courses)
@@ -53,44 +55,51 @@ public class CourseController {
 
     @PostMapping(consumes = "multipart/form-data")
     @Operation(summary = "Tạo khóa học mới (có thể kèm ảnh thumbnail)")
-    public ResponseEntity<ApiResponse<CourseDTO>> createCourse(
+    public ResponseEntity<ApiResponse<CourseResponseDTO>> createCourse(
             @RequestPart("course") String courseJson,
-            @RequestPart(value = "thumbnail", required = false) MultipartFile thumbnail) throws Exception {
+            @RequestPart(value = "thumbnail", required = false) MultipartFile thumbnail) {
 
-        // Parse JSON string to DTO (fix Swagger multipart issue)
-        ObjectMapper objectMapper = new ObjectMapper();
-        CourseDTO courseDTO = objectMapper.readValue(courseJson, CourseDTO.class);
+        try {
+            // Parse JSON string to DTO (fix Swagger multipart issue)
+            ObjectMapper objectMapper = new ObjectMapper();
+            CourseRequestDTO courseDTO = objectMapper.readValue(courseJson, CourseRequestDTO.class);
 
-        // Validate manually since @Valid doesn't work with String
-        Set<ConstraintViolation<CourseDTO>> violations = validator.validate(courseDTO);
-        if (!violations.isEmpty()) {
-            throw new MethodArgumentNotValidException(null,
-                    new BeanPropertyBindingResult(courseDTO, "courseDTO"));
+            // Validate manually since @Valid doesn't work with String
+            Set<ConstraintViolation<CourseRequestDTO>> violations = validator.validate(courseDTO);
+            if (!violations.isEmpty()) {
+                String errorMessage = violations.stream()
+                        .map(v -> v.getPropertyPath() + ": " + v.getMessage())
+                        .reduce((a, b) -> a + "; " + b)
+                        .orElse("Validation failed");
+                throw new BadRequestException(errorMessage);
+            }
+
+            CourseResponseDTO createdCourse = courseService.createCourse(courseDTO, thumbnail);
+
+            return ResponseEntity
+                    .status(201)
+                    .body(ApiResponse.<CourseResponseDTO>builder()
+                            .success(true)
+                            .message("Tạo khóa học thành công")
+                            .data(createdCourse)
+                            .build());
+        } catch (IOException e) {
+            throw new BadRequestException("JSON không hợp lệ: " + e.getMessage());
         }
-
-        CourseDTO createdCourse = courseService.createCourse(courseDTO, thumbnail);
-
-        return ResponseEntity
-                .status(201)
-                .body(ApiResponse.<CourseDTO>builder()
-                        .success(true)
-                        .message("Tạo khóa học thành công")
-                        .data(createdCourse)
-                        .build());
     }
 
     @GetMapping("/published")
     @Operation(summary = "Lấy các khóa học đã publish")
-    public ResponseEntity<ApiResponse<Page<CourseDTO>>> getPublishedCourses(
+    public ResponseEntity<ApiResponse<Page<CourseResponseDTO>>> getPublishedCourses(
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir) {
 
-        Page<CourseDTO> courses = courseService.getPublishedCourses(page, size, sortBy, sortDir);
+        Page<CourseResponseDTO> courses = courseService.getPublishedCourses(page, size, sortBy, sortDir);
 
         return ResponseEntity.ok(
-                ApiResponse.<Page<CourseDTO>>builder()
+                ApiResponse.<Page<CourseResponseDTO>>builder()
                         .success(true)
                         .message("Lấy danh sách khóa học đã publish thành công")
                         .data(courses)
@@ -99,15 +108,15 @@ public class CourseController {
 
     @GetMapping("/instructor")
     @Operation(summary = "Lấy khóa học theo giảng viên")
-    public ResponseEntity<ApiResponse<Page<CourseDTO>>> getCoursesByInstructor(
+    public ResponseEntity<ApiResponse<Page<CourseResponseDTO>>> getCoursesByInstructor(
             @RequestParam Long instructorId,
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size) {
 
-        Page<CourseDTO> courses = courseService.getCoursesByInstructor(instructorId, page, size);
+        Page<CourseResponseDTO> courses = courseService.getCoursesByInstructor(instructorId, page, size);
 
         return ResponseEntity.ok(
-                ApiResponse.<Page<CourseDTO>>builder()
+                ApiResponse.<Page<CourseResponseDTO>>builder()
                         .success(true)
                         .message("Lấy danh sách khóa học của giảng viên thành công")
                         .data(courses)
@@ -116,15 +125,15 @@ public class CourseController {
 
     @GetMapping("/search")
     @Operation(summary = "Tìm kiếm khóa học")
-    public ResponseEntity<ApiResponse<Page<CourseDTO>>> searchCourses(
+    public ResponseEntity<ApiResponse<Page<CourseResponseDTO>>> searchCourses(
             @RequestParam String keyword,
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size) {
 
-        Page<CourseDTO> courses = courseService.searchCourses(keyword, page, size);
+        Page<CourseResponseDTO> courses = courseService.searchCourses(keyword, page, size);
 
         return ResponseEntity.ok(
-                ApiResponse.<Page<CourseDTO>>builder()
+                ApiResponse.<Page<CourseResponseDTO>>builder()
                         .success(true)
                         .message("Tìm kiếm khóa học thành công")
                         .data(courses)
@@ -133,13 +142,58 @@ public class CourseController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Lấy chi tiết khóa học theo ID")
-    public ResponseEntity<ApiResponse<CourseDTO>> getCourseById(@PathVariable Long id) {
-        CourseDTO course = courseService.getCourseById(id);
+    public ResponseEntity<ApiResponse<CourseResponseDTO>> getCourseById(@PathVariable Long id) {
+        CourseResponseDTO course = courseService.getCourseById(id);
         return ResponseEntity.ok(
-                ApiResponse.<CourseDTO>builder()
+                ApiResponse.<CourseResponseDTO>builder()
                         .success(true)
                         .message("Lấy thông tin khóa học thành công")
                         .data(course)
+                        .build());
+    }
+
+    @PatchMapping(value = "/{id}", consumes = "multipart/form-data")
+    @Operation(summary = "Cập nhật thông tin khóa học (Partial Update)")
+    public ResponseEntity<ApiResponse<CourseResponseDTO>> updateCourse(
+            @PathVariable Long id,
+            @RequestPart("course") String courseJson,
+            @RequestPart(value = "thumbnail", required = false) MultipartFile thumbnail) {
+
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            CourseUpdateDTO updateDTO = objectMapper.readValue(courseJson, CourseUpdateDTO.class);
+
+            // Validate fields if present
+            Set<ConstraintViolation<CourseUpdateDTO>> violations = validator.validate(updateDTO);
+            if (!violations.isEmpty()) {
+                String errorMessage = violations.stream()
+                        .map(v -> v.getPropertyPath() + ": " + v.getMessage())
+                        .reduce((a, b) -> a + "; " + b)
+                        .orElse("Validation failed");
+                throw new BadRequestException(errorMessage);
+            }
+
+            CourseResponseDTO updatedCourse = courseService.updateCourse(id, updateDTO, thumbnail);
+
+            return ResponseEntity.ok(
+                    ApiResponse.<CourseResponseDTO>builder()
+                            .success(true)
+                            .message("Cập nhật khóa học thành công")
+                            .data(updatedCourse)
+                            .build());
+        } catch (IOException e) {
+            throw new BadRequestException("JSON không hợp lệ: " + e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Xóa khóa học")
+    public ResponseEntity<ApiResponse<Void>> deleteCourse(@PathVariable Long id) {
+        courseService.deleteCourse(id);
+        return ResponseEntity.ok(
+                ApiResponse.<Void>builder()
+                        .success(true)
+                        .message("Xóa khóa học thành công")
                         .build());
     }
 }

@@ -15,7 +15,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
@@ -26,20 +25,26 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
+        String jwt = null;
+
+        // ✅ CHỈ đọc access token từ Authorization header
         String authHeader = request.getHeader("Authorization");
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            jwt = authHeader.substring(7);
+        }
+
+        if (jwt == null) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        String jwt = authHeader.substring(7);
         if (jwtUtils.validateJwtToken(jwt)) {
             Long userId = jwtUtils.getUserIdFromJwtToken(jwt);
             String username = jwtUtils.getUserNameFromJwtToken(jwt);
 
             // Tạo UserPrincipal trực tiếp từ JWT (không query DB)
-            com.example.fuji.security.UserPrincipal userPrincipal =
-                new com.example.fuji.security.UserPrincipal(userId, username, "", new java.util.ArrayList<>());
+            com.example.fuji.security.UserPrincipal userPrincipal = new com.example.fuji.security.UserPrincipal(userId,
+                    username, "", new java.util.ArrayList<>());
 
             UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                     userPrincipal, null, userPrincipal.getAuthorities());

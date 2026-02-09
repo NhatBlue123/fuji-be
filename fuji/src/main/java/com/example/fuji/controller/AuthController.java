@@ -1,7 +1,5 @@
 package com.example.fuji.controller;
 
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,11 +12,12 @@ import com.example.fuji.dto.request.RegisterDTO;
 import com.example.fuji.dto.request.VerifyOtpDTO;
 import com.example.fuji.dto.response.ApiResponse;
 import com.example.fuji.dto.response.AuthResponse;
+import com.example.fuji.dto.response.LoginResponse;
+import com.example.fuji.dto.response.RefreshResponse;
 import com.example.fuji.service.AuthService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -47,52 +46,67 @@ public class AuthController {
 
     @PostMapping("/login")
     @Operation(summary = "Đăng nhập")
-    public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody AuthDTO authRequest,
-            HttpServletResponse response) {
-        AuthResponse authData = authService.login(authRequest);
-        ResponseCookie accessCookie = ResponseCookie.from("accessToken", authData.getAccessToken())
-                .httpOnly(true)
-                .secure(false)
-                .path("/")
-                .maxAge(60 * 60)
-                .sameSite("Lax")
-                .build();
+    public ResponseEntity<ApiResponse<LoginResponse>> login(
+            @Valid @RequestBody AuthDTO authRequest,
+            jakarta.servlet.http.HttpServletResponse response) {
 
-        ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", authData.getRefreshToken())
-                .httpOnly(true)
-                .secure(false)
-                .path("/")
-                .maxAge(7 * 24 * 60 * 60) // 7 ngày
-                .sameSite("Lax")
-                .build();
+        AuthResponse authResponse = authService.login(authRequest);
 
-        response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
-        response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
-        return ResponseEntity.ok(ApiResponse.success("Đăng nhập thành công", authData));
+        // Set refreshToken vào HttpOnly cookie (bảo mật cao)
+        jakarta.servlet.http.Cookie refreshCookie = new jakarta.servlet.http.Cookie("refreshToken",
+                authResponse.getRefreshToken());
+        refreshCookie.setHttpOnly(true);
+        refreshCookie.setSecure(false); // Set true khi deploy production với HTTPS
+        refreshCookie.setPath("/");
+        refreshCookie.setMaxAge(7 * 24 * 60 * 60); // 7 ngày
+        response.addCookie(refreshCookie);
+
+        // ✅ Access token trả về trong JSON body (client tự quản lý)
+        LoginResponse loginResponse = new LoginResponse(
+                authResponse.getAccessToken(),
+                authResponse.getUsername());
+
+        return ResponseEntity.ok(ApiResponse.success("Đăng nhập thành công", loginResponse));
     }
 
     @PostMapping("/refresh")
     @Operation(summary = "Làm mới access token")
-    public ResponseEntity<ApiResponse<AuthResponse>> refresh(
-            @CookieValue(name = "refreshToken", required = false) String cookieToken,
-            @RequestBody(required = false) java.util.Map<String, String> body) {
+    public ResponseEntity<ApiResponse<RefreshResponse>> refresh(
+            @CookieValue(name = "refreshToken", required = true) String refreshToken,
+            jakarta.servlet.http.HttpServletResponse response) {
 
-        // Ưu tiên cookie, fallback sang body
-        String refreshToken = cookieToken != null ? cookieToken : (body != null ? body.get("refreshToken") : null);
+        // ✅ Refresh token CHỈ đọc từ HttpOnly cookie (không cho phép từ body)
+        AuthResponse authResponse = authService.refreshAccessToken(refreshToken);
 
-        if (refreshToken == null) {
-            throw new com.example.fuji.exception.UnauthorizedException("Refresh token không được cung cấp");
-        }
+        // ✅ Rotate refresh token (set cookie mới)
+        jakarta.servlet.http.Cookie newRefreshCookie = new jakarta.servlet.http.Cookie("refreshToken",
+                authResponse.getRefreshToken());
+        newRefreshCookie.setHttpOnly(true);
+        newRefreshCookie.setSecure(false); // TODO: Set true khi deploy production
+        newRefreshCookie.setPath("/");
+        newRefreshCookie.setMaxAge(7 * 24 * 60 * 60);
+        response.addCookie(newRefreshCookie);
 
-        AuthResponse response = authService.refreshAccessToken(refreshToken);
-        return ResponseEntity.ok(ApiResponse.success("Làm mới token thành công", response));
+        // ✅ Chỉ trả về access token mới trong JSON
+        RefreshResponse refreshResponse = new RefreshResponse(authResponse.getAccessToken());
+
+        return ResponseEntity.ok(ApiResponse.success("Làm mới token thành công", refreshResponse));
     }
 
     @PostMapping("/logout")
     @Operation(summary = "Đăng xuất")
-    public ResponseEntity<ApiResponse<String>> logout() {
+    public ResponseEntity<ApiResponse<String>> logout(jakarta.servlet.http.HttpServletResponse response) {
         Long userId = authUtils.getCurrentUserId();
         authService.logout(userId);
+
+        // Xóa refresh token cookie
+
+        jakarta.servlet.http.Cookie refreshCookie = new jakarta.servlet.http.Cookie("refreshToken", null);
+        refreshCookie.setPath("/");
+        refreshCookie.setMaxAge(0);
+        refreshCookie.setHttpOnly(true);
+        response.addCookie(refreshCookie);
+
         return ResponseEntity.ok(ApiResponse.success("Đăng xuất thành công"));
     }
 }
