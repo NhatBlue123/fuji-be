@@ -1,32 +1,43 @@
 package com.example.fuji.config;
 
 import io.github.cdimascio.dotenv.Dotenv;
-import jakarta.annotation.PostConstruct;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.env.EnvironmentPostProcessor;
+import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.core.env.MapPropertySource;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
- * Configuration class to load environment variables from .env file
- * This allows Spring Boot to access variables defined in .env using ${VAR_NAME}
- * syntax
+ * EnvironmentPostProcessor to load .env file BEFORE Spring processes
+ * application.properties
+ * This ensures environment variables are available when Spring resolves
+ * ${VAR_NAME} placeholders
  */
-@Configuration
-public class DotenvConfig {
+public class DotenvConfig implements EnvironmentPostProcessor {
 
-    @PostConstruct
-    public void loadEnv() {
+    @Override
+    public void postProcessEnvironment(ConfigurableEnvironment environment, SpringApplication application) {
         try {
-            // Load .env from the root directory (fuji-be/)
             Dotenv dotenv = Dotenv.configure()
-                    .directory("./") // Look for .env in project root
-                    .ignoreIfMissing() // Don't fail if .env doesn't exist
+                    .directory("../")
+                    .ignoreIfMissing()
                     .load();
 
-            // Set each environment variable as a system property so Spring can access it
-            dotenv.entries().forEach(entry -> System.setProperty(entry.getKey(), entry.getValue()));
+            Map<String, Object> dotenvProperties = new HashMap<>();
+            dotenv.entries().forEach(entry -> {
+                dotenvProperties.put(entry.getKey(), entry.getValue());
+            });
 
-            System.out.println("✅ .env file loaded successfully");
+            // Add to Spring's environment with high priority
+            environment.getPropertySources().addFirst(
+                    new MapPropertySource("dotenvProperties", dotenvProperties));
+
+            System.out.println("✅ .env file loaded successfully with " + dotenvProperties.size() + " variables");
         } catch (Exception e) {
             System.err.println("⚠️  Could not load .env file: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 }
