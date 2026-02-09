@@ -1,8 +1,7 @@
 package com.example.fuji.controller;
 
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,7 +18,6 @@ import com.example.fuji.service.AuthService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -55,7 +53,8 @@ public class AuthController {
         AuthResponse authResponse = authService.login(authRequest);
 
         // Set refreshToken vào HttpOnly cookie (bảo mật cao)
-        jakarta.servlet.http.Cookie refreshCookie = new jakarta.servlet.http.Cookie("refreshToken", authResponse.getRefreshToken());
+        jakarta.servlet.http.Cookie refreshCookie = new jakarta.servlet.http.Cookie("refreshToken",
+                authResponse.getRefreshToken());
         refreshCookie.setHttpOnly(true);
         refreshCookie.setSecure(false); // Set true khi deploy production với HTTPS
         refreshCookie.setPath("/");
@@ -64,9 +63,8 @@ public class AuthController {
 
         // ✅ Access token trả về trong JSON body (client tự quản lý)
         LoginResponse loginResponse = new LoginResponse(
-            authResponse.getAccessToken(),
-            authResponse.getUsername()
-        );
+                authResponse.getAccessToken(),
+                authResponse.getUsername());
 
         return ResponseEntity.ok(ApiResponse.success("Đăng nhập thành công", loginResponse));
     }
@@ -78,13 +76,13 @@ public class AuthController {
             jakarta.servlet.http.HttpServletResponse response) {
 
         // ✅ Refresh token CHỈ đọc từ HttpOnly cookie (không cho phép từ body)
-
         AuthResponse authResponse = authService.refreshAccessToken(refreshToken);
 
         // ✅ Rotate refresh token (set cookie mới)
-        jakarta.servlet.http.Cookie newRefreshCookie = new jakarta.servlet.http.Cookie("refreshToken", authResponse.getRefreshToken());
+        jakarta.servlet.http.Cookie newRefreshCookie = new jakarta.servlet.http.Cookie("refreshToken",
+                authResponse.getRefreshToken());
         newRefreshCookie.setHttpOnly(true);
-        newRefreshCookie.setSecure(false);  // TODO: Set true khi deploy production
+        newRefreshCookie.setSecure(false); // TODO: Set true khi deploy production
         newRefreshCookie.setPath("/");
         newRefreshCookie.setMaxAge(7 * 24 * 60 * 60);
         response.addCookie(newRefreshCookie);
