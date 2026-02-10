@@ -46,33 +46,21 @@ public class SecurityConfig {
             .formLogin(form -> form.disable())
             .httpBasic(basic -> basic.disable())
             .exceptionHandling(ex -> ex
-                .accessDeniedHandler((request, response, accessDeniedException) -> {
-                    log.error("=== 403 ACCESS DENIED ===");
-                    log.error("URL: {}", request.getRequestURL());
-                    log.error("Method: {}", request.getMethod());
-                    log.error("Error: {}", accessDeniedException.getMessage());
-
+                .accessDeniedHandler((request, response, ex1) -> {
                     response.setStatus(403);
                     response.setContentType("application/json;charset=UTF-8");
-                    String json = String.format(
-                        "{\"timestamp\":\"%s\",\"status\":403,\"error\":\"Forbidden\",\"message\":\"Bạn không có quyền truy cập tài nguyên này\"}",
-                        java.time.LocalDateTime.now()
+                    response.getWriter().write(
+                        "{\"timestamp\":\"" + java.time.LocalDateTime.now() + 
+                        "\",\"status\":403,\"error\":\"Forbidden\",\"message\":\"Bạn không có quyền truy cập\"}"
                     );
-                    response.getWriter().write(json);
                 })
-                .authenticationEntryPoint((request, response, authException) -> {
-                    log.error("=== 401 UNAUTHORIZED ===");
-                    log.error("URL: {}", request.getRequestURL());
-                    log.error("Method: {}", request.getMethod());
-                    log.error("Error: {}", authException.getMessage());
-
+                .authenticationEntryPoint((request, response, ex1) -> {
                     response.setStatus(401);
                     response.setContentType("application/json;charset=UTF-8");
-                    String json = String.format(
-                        "{\"timestamp\":\"%s\",\"status\":401,\"error\":\"Unauthorized\",\"message\":\"Bạn cần đăng nhập để truy cập tài nguyên này\"}",
-                        java.time.LocalDateTime.now()
+                    response.getWriter().write(
+                        "{\"timestamp\":\"" + java.time.LocalDateTime.now() + 
+                        "\",\"status\":401,\"error\":\"Unauthorized\",\"message\":\"Bạn cần đăng nhập\"}"
                     );
-                    response.getWriter().write(json);
                 })
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)

@@ -15,7 +15,8 @@ import lombok.Data;
     @Index(name = "idx_created_by", columnList = "created_by"),
     @Index(name = "idx_is_published", columnList = "is_published"),
     @Index(name = "idx_created_at", columnList = "created_at"),
-    @Index(name = "idx_instructor_published", columnList = "instructor_id, is_published")
+    @Index(name = "idx_instructor_published", columnList = "instructor_id, is_published"),
+    @Index(name = "idx_published_rating", columnList = "is_published, average_rating")
 })
 @Data
 public class Course {
@@ -75,6 +76,9 @@ public class Course {
 
     @Column(name = "is_published", nullable = false)
     private Boolean isPublished = false;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

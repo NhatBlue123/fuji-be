@@ -128,19 +128,21 @@ public class AuthService {
     }
 
     public AuthResponse login(AuthDTO authRequest) {
+        // Authenticate user
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(authRequest.getUsername(), authRequest.getPassword())
         );
-
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
+        // Get user and verify active status
         User user = userRepository.findByUsername(authRequest.getUsername())
                 .orElseThrow(() -> new ResourceNotFoundException("Người dùng không tồn tại"));
 
         if (!user.getIsActive()) {
-            throw new UnauthorizedException("Tài khoản chưa được kích hoạt qua OTP!");
+            throw new UnauthorizedException("Tài khoản chưa được kích hoạt!");
         }
 
+        // Generate tokens
         String accessToken = jwtUtils.generateTokenFromUsername(user.getUsername(), user.getId());
         String refreshToken = refreshTokenService.createRefreshToken(user).getToken();
 

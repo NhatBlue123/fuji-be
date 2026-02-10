@@ -55,6 +55,7 @@ public class EmailService {
         }
     }
 
+    @SuppressWarnings("unused")
     private String buildOtpEmailTemplate(String otpCode) {
         return """
             <!DOCTYPE html>
