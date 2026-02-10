@@ -10,6 +10,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class AuthDTO {
+    @NotBlank(message = "Username không được để trống")
+    @Size(min = 3, max = 20, message = "Username phải từ 3 đến 20 ký tự")
     private String username;
 
     @NotBlank(message = "Mật khẩu không được để trống")

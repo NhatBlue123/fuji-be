@@ -146,7 +146,7 @@ public class AuthService {
         String accessToken = jwtUtils.generateTokenFromUsername(user.getUsername(), user.getId());
         String refreshToken = refreshTokenService.createRefreshToken(user).getToken();
 
-        return new AuthResponse(accessToken, refreshToken, user.getUsername());
+        return new AuthResponse(accessToken, refreshToken, user.getUsername(), user.getEmail());
     }
 
     @Transactional
@@ -155,7 +155,7 @@ public class AuthService {
         User user = newRefreshToken.getUser();
 
         String accessToken = jwtUtils.generateTokenFromUsername(user.getUsername(), user.getId());
-        return new AuthResponse(accessToken, newRefreshToken.getToken(), user.getUsername());
+        return new AuthResponse(accessToken, newRefreshToken.getToken(), user.getUsername(), user.getEmail());
     }
 
     @Transactional

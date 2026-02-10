@@ -29,7 +29,7 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/courses")
 @RequiredArgsConstructor
 @Tag(name = "Courses", description = "API quản lý khóa học")
-@SecurityRequirement(name = "bearerAuth") //để swagger nhận biết token
+@SecurityRequirement(name = "bearerAuth") // để swagger nhận biết token
 public class CourseController {
 
     private final CourseService courseService;
@@ -46,12 +46,11 @@ public class CourseController {
         Page<CourseResponseDTO> courses = courseService.getAllCourses(page, size, sortBy, sortDir);
 
         return ResponseEntity.ok(
-            ApiResponse.<Page<CourseResponseDTO>>builder()
-                .success(true)
-                .message("Lấy danh sách khóa học thành công")
-                .data(courses)
-                .build()
-        );
+                ApiResponse.<Page<CourseResponseDTO>>builder()
+                        .success(true)
+                        .message("Lấy danh sách khóa học thành công")
+                        .data(courses)
+                        .build());
     }
 
     @PostMapping(consumes = "multipart/form-data")
@@ -69,9 +68,9 @@ public class CourseController {
             Set<ConstraintViolation<CourseRequestDTO>> violations = validator.validate(courseDTO);
             if (!violations.isEmpty()) {
                 String errorMessage = violations.stream()
-                    .map(v -> v.getPropertyPath() + ": " + v.getMessage())
-                    .reduce((a, b) -> a + "; " + b)
-                    .orElse("Validation failed");
+                        .map(v -> v.getPropertyPath() + ": " + v.getMessage())
+                        .reduce((a, b) -> a + "; " + b)
+                        .orElse("Validation failed");
                 throw new BadRequestException(errorMessage);
             }
 
@@ -80,10 +79,10 @@ public class CourseController {
             return ResponseEntity
                     .status(201)
                     .body(ApiResponse.<CourseResponseDTO>builder()
-                        .success(true)
-                        .message("Tạo khóa học thành công")
-                        .data(createdCourse)
-                        .build());
+                            .success(true)
+                            .message("Tạo khóa học thành công")
+                            .data(createdCourse)
+                            .build());
         } catch (IOException e) {
             throw new BadRequestException("JSON không hợp lệ: " + e.getMessage());
         }
@@ -100,12 +99,11 @@ public class CourseController {
         Page<CourseResponseDTO> courses = courseService.getPublishedCourses(page, size, sortBy, sortDir);
 
         return ResponseEntity.ok(
-            ApiResponse.<Page<CourseResponseDTO>>builder()
-                .success(true)
-                .message("Lấy danh sách khóa học đã publish thành công")
-                .data(courses)
-                .build()
-        );
+                ApiResponse.<Page<CourseResponseDTO>>builder()
+                        .success(true)
+                        .message("Lấy danh sách khóa học đã publish thành công")
+                        .data(courses)
+                        .build());
     }
 
     @GetMapping("/instructor")
@@ -118,12 +116,11 @@ public class CourseController {
         Page<CourseResponseDTO> courses = courseService.getCoursesByInstructor(instructorId, page, size);
 
         return ResponseEntity.ok(
-            ApiResponse.<Page<CourseResponseDTO>>builder()
-                .success(true)
-                .message("Lấy danh sách khóa học của giảng viên thành công")
-                .data(courses)
-                .build()
-        );
+                ApiResponse.<Page<CourseResponseDTO>>builder()
+                        .success(true)
+                        .message("Lấy danh sách khóa học của giảng viên thành công")
+                        .data(courses)
+                        .build());
     }
 
     @GetMapping("/search")
@@ -136,12 +133,11 @@ public class CourseController {
         Page<CourseResponseDTO> courses = courseService.searchCourses(keyword, page, size);
 
         return ResponseEntity.ok(
-            ApiResponse.<Page<CourseResponseDTO>>builder()
-                .success(true)
-                .message("Tìm kiếm khóa học thành công")
-                .data(courses)
-                .build()
-        );
+                ApiResponse.<Page<CourseResponseDTO>>builder()
+                        .success(true)
+                        .message("Tìm kiếm khóa học thành công")
+                        .data(courses)
+                        .build());
     }
 
     @GetMapping("/{id}")
@@ -149,12 +145,11 @@ public class CourseController {
     public ResponseEntity<ApiResponse<CourseResponseDTO>> getCourseById(@PathVariable Long id) {
         CourseResponseDTO course = courseService.getCourseById(id);
         return ResponseEntity.ok(
-            ApiResponse.<CourseResponseDTO>builder()
-                .success(true)
-                .message("Lấy thông tin khóa học thành công")
-                .data(course)
-                .build()
-        );
+                ApiResponse.<CourseResponseDTO>builder()
+                        .success(true)
+                        .message("Lấy thông tin khóa học thành công")
+                        .data(course)
+                        .build());
     }
 
     @PatchMapping(value = "/{id}", consumes = "multipart/form-data")
@@ -172,21 +167,20 @@ public class CourseController {
             Set<ConstraintViolation<CourseUpdateDTO>> violations = validator.validate(updateDTO);
             if (!violations.isEmpty()) {
                 String errorMessage = violations.stream()
-                    .map(v -> v.getPropertyPath() + ": " + v.getMessage())
-                    .reduce((a, b) -> a + "; " + b)
-                    .orElse("Validation failed");
+                        .map(v -> v.getPropertyPath() + ": " + v.getMessage())
+                        .reduce((a, b) -> a + "; " + b)
+                        .orElse("Validation failed");
                 throw new BadRequestException(errorMessage);
             }
 
             CourseResponseDTO updatedCourse = courseService.updateCourse(id, updateDTO, thumbnail);
 
             return ResponseEntity.ok(
-                ApiResponse.<CourseResponseDTO>builder()
-                    .success(true)
-                    .message("Cập nhật khóa học thành công")
-                    .data(updatedCourse)
-                    .build()
-            );
+                    ApiResponse.<CourseResponseDTO>builder()
+                            .success(true)
+                            .message("Cập nhật khóa học thành công")
+                            .data(updatedCourse)
+                            .build());
         } catch (IOException e) {
             throw new BadRequestException("JSON không hợp lệ: " + e.getMessage());
         }
@@ -197,10 +191,9 @@ public class CourseController {
     public ResponseEntity<ApiResponse<Void>> deleteCourse(@PathVariable Long id) {
         courseService.deleteCourse(id);
         return ResponseEntity.ok(
-            ApiResponse.<Void>builder()
-                .success(true)
-                .message("Xóa khóa học thành công")
-                .build()
-        );
+                ApiResponse.<Void>builder()
+                        .success(true)
+                        .message("Xóa khóa học thành công")
+                        .build());
     }
 }

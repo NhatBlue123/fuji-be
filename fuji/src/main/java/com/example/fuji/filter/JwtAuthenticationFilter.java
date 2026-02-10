@@ -15,7 +15,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
@@ -34,8 +33,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             jwt = authHeader.substring(7);
         }
 
-
-
         if (jwt == null) {
             filterChain.doFilter(request, response);
             return;
@@ -46,8 +43,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String username = jwtUtils.getUserNameFromJwtToken(jwt);
 
             // Tạo UserPrincipal trực tiếp từ JWT (không query DB)
-            com.example.fuji.security.UserPrincipal userPrincipal =
-                new com.example.fuji.security.UserPrincipal(userId, username, "", new java.util.ArrayList<>());
+            com.example.fuji.security.UserPrincipal userPrincipal = new com.example.fuji.security.UserPrincipal(userId,
+                    username, "", new java.util.ArrayList<>());
 
             UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                     userPrincipal, null, userPrincipal.getAuthorities());
