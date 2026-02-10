@@ -50,7 +50,7 @@ public class SecurityConfig {
                     response.setStatus(403);
                     response.setContentType("application/json;charset=UTF-8");
                     response.getWriter().write(
-                        "{\"timestamp\":\"" + java.time.LocalDateTime.now() + 
+                        "{\"timestamp\":\"" + java.time.LocalDateTime.now() +
                         "\",\"status\":403,\"error\":\"Forbidden\",\"message\":\"Bạn không có quyền truy cập\"}"
                     );
                 })
@@ -58,7 +58,7 @@ public class SecurityConfig {
                     response.setStatus(401);
                     response.setContentType("application/json;charset=UTF-8");
                     response.getWriter().write(
-                        "{\"timestamp\":\"" + java.time.LocalDateTime.now() + 
+                        "{\"timestamp\":\"" + java.time.LocalDateTime.now() +
                         "\",\"status\":401,\"error\":\"Unauthorized\",\"message\":\"Bạn cần đăng nhập\"}"
                     );
                 })
