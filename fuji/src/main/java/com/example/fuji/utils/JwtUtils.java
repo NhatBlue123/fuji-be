@@ -34,13 +34,24 @@ public class JwtUtils {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public String generateTokenFromUsername(String username) {
+    public String generateTokenFromUsername(String username, Long userId) {
         return Jwts.builder()
-                .subject(username)
+                .subject(userId.toString())  // sub = userId (chuẩn JWT)
+                .claim("username", username)
                 .issuedAt(new Date())
                 .expiration(new Date((new Date()).getTime() + jwtExpirationMs))
                 .signWith(getSigningKey())
                 .compact();
+    }
+
+    public Long getUserIdFromJwtToken(String token) {
+        String subject = Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .getSubject();
+        return Long.parseLong(subject);
     }
 
     public String getUserNameFromJwtToken(String token) {
@@ -49,7 +60,7 @@ public class JwtUtils {
                 .build()
                 .parseSignedClaims(token)
                 .getPayload()
-                .getSubject();
+                .get("username", String.class);
     }
 
     public boolean validateJwtToken(String authToken) {

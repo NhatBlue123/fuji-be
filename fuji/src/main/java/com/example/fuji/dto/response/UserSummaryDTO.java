@@ -1,15 +1,17 @@
 package com.example.fuji.dto.response;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@AllArgsConstructor
+@Builder
 @NoArgsConstructor
-public class AuthResponse {
-    private String accessToken;
-    private String refreshToken;
+@AllArgsConstructor
+public class UserSummaryDTO {
+    private Long id;
     private String username;
-    private String email;
+    private String fullName;
+    private String avatarUrl;
 }

@@ -1,5 +1,5 @@
-package com.example.fuji.dto.request;
-//định nghia kiểu object CourseDTO dùng để truyền dữ liệu khóa học trong các request... khi fe call api thì phải truyền đúng kiểu này
+package com.example.fuji.dto.response;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -12,12 +12,15 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CourseDTO {
+public class CourseResponseDTO {
     private Long id;
     private String title;
     private String description;
-    private String instructorName;
-    private Long instructorId;
+
+    // Nested objects - không có instructorId
+    private UserSummaryDTO instructor;
+    private UserSummaryDTO author;
+
     private String thumbnailUrl;
     private BigDecimal price;
     private Integer studentCount;
