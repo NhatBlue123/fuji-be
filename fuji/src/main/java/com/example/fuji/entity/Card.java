@@ -48,6 +48,9 @@ public class Card {
     @Column(name = "example_sentence", columnDefinition = "TEXT")
     private String exampleSentence;
 
+    @Column(name = "preview_url", length = 500)
+    private String previewUrl;
+
     @Column(name = "card_order", nullable = false)
     private Integer cardOrder;
 

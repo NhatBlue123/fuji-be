@@ -26,4 +26,8 @@ public class FlashCardResponseDTO {
     private Integer cardCount;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    // Study tracking fields
+    private Long studyCount;
+    private UserStudyProgressDTO userProgress;
 }
