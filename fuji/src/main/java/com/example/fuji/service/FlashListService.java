@@ -111,10 +111,20 @@ public class FlashListService {
         FlashList savedFlashList = flashListRepository.save(flashList);
 
         if (dto.getFlashcardIds() != null && !dto.getFlashcardIds().isEmpty()) {
+            boolean isListPublic = savedFlashList.getIsPublic();
             int order = 0;
             for (Long flashCardId : dto.getFlashcardIds()) {
                 FlashCard flashCard = flashCardRepository.findByIdAndDeletedAtIsNull(flashCardId)
                     .orElseThrow(() -> new ResourceNotFoundException("FlashCard không tồn tại với id: " + flashCardId));
+
+                // Visibility rules
+                boolean isOwnFlashCard = flashCard.getUser().getId().equals(currentUser.getId());
+                if (!isOwnFlashCard && !flashCard.getIsPublic()) {
+                    throw new RuntimeException("Không thể thêm FlashCard riêng tư của người khác (id: " + flashCardId + ")");
+                }
+                if (isOwnFlashCard && !flashCard.getIsPublic() && isListPublic) {
+                    throw new RuntimeException("Không thể thêm FlashCard riêng tư vào FlashList công khai (id: " + flashCardId + ")");
+                }
 
                 FlashListCard flc = FlashListCard.builder()
                     .flashList(savedFlashList)
@@ -228,6 +238,17 @@ public class FlashListService {
 
         FlashCard flashCard = flashCardRepository.findByIdAndDeletedAtIsNull(cardId)
             .orElseThrow(() -> new ResourceNotFoundException("FlashCard không tồn tại với id: " + cardId));
+
+        // Visibility rules:
+        // 1. Other user's private flashcard → cannot add
+        boolean isOwnFlashCard = flashCard.getUser().getId().equals(currentUser.getId());
+        if (!isOwnFlashCard && !flashCard.getIsPublic()) {
+            throw new RuntimeException("Không thể thêm FlashCard riêng tư của người khác");
+        }
+        // 2. Own private flashcard → cannot add to own PUBLIC flashlist
+        if (isOwnFlashCard && !flashCard.getIsPublic() && flashList.getIsPublic()) {
+            throw new RuntimeException("Không thể thêm FlashCard riêng tư vào FlashList công khai. Hãy đặt FlashCard hoặc FlashList ở chế độ phù hợp.");
+        }
 
         if (flashListCardRepository.existsByFlashListIdAndFlashCardId(listId, cardId)) {
             throw new RuntimeException("FlashCard đã tồn tại trong FlashList");

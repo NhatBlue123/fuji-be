@@ -10,11 +10,13 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.fuji.dto.request.CardDTO;
+import com.example.fuji.dto.request.ExerciseResultRequest;
 import com.example.fuji.dto.request.FlashCardRequestDTO;
 import com.example.fuji.dto.request.FlashCardUpdateDTO;
 import com.example.fuji.dto.response.ApiResponse;
 import com.example.fuji.dto.response.FlashCardResponseDTO;
 import com.example.fuji.dto.response.PaginationDTO;
+import com.example.fuji.dto.response.UserStudyProgressDTO;
 import com.example.fuji.enums.JlptLevel;
 import com.example.fuji.service.FlashCardService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -159,6 +161,34 @@ public class FlashCardController {
                 "results", flashCards.getContent(),
                 "pagination", pagination
             ))
+            .build());
+    }
+
+    /**
+     * Bắt đầu học một FlashCard.
+     * Nếu user chưa có trong danh sách học, thêm vào.
+     */
+    @PostMapping("/{cardId}/start-learning")
+    public ResponseEntity<ApiResponse<UserStudyProgressDTO>> startLearning(@PathVariable Long cardId) {
+        UserStudyProgressDTO progress = flashCardService.startLearning(cardId);
+        return ResponseEntity.ok(ApiResponse.<UserStudyProgressDTO>builder()
+            .success(true)
+            .message("Bắt đầu học FlashCard thành công")
+            .data(progress)
+            .build());
+    }
+
+    /**
+     * Nộp bài tập exercise.
+     */
+    @PostMapping("/{cardId}/submit-exercise")
+    public ResponseEntity<ApiResponse<Void>> submitExercise(
+            @PathVariable Long cardId,
+            @RequestBody ExerciseResultRequest request) {
+        flashCardService.submitExerciseResult(cardId, request.getExerciseType(), request.getCorrectCount(), request.getTotalCount());
+        return ResponseEntity.ok(ApiResponse.<Void>builder()
+            .success(true)
+            .message("Nộp bài tập thành công")
             .build());
     }
 }

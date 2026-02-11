@@ -21,15 +21,18 @@ import com.example.fuji.dto.request.MediaDTO;
 import com.example.fuji.dto.response.CardResponseDTO;
 import com.example.fuji.dto.response.FlashCardResponseDTO;
 import com.example.fuji.dto.response.PaginationDTO;
+import com.example.fuji.dto.response.UserStudyProgressDTO;
 import com.example.fuji.dto.response.UserSummaryDTO;
 import com.example.fuji.entity.Card;
 import com.example.fuji.entity.FlashCard;
 import com.example.fuji.entity.User;
+import com.example.fuji.entity.UserFlashCardStudy;
 import com.example.fuji.enums.JlptLevel;
 import com.example.fuji.exception.ResourceNotFoundException;
 import com.example.fuji.repository.CardRepository;
 import com.example.fuji.repository.FlashCardRepository;
 import com.example.fuji.repository.FlashListCardRepository;
+import com.example.fuji.repository.UserFlashCardStudyRepository;
 import com.example.fuji.utils.AuthUtils;
 
 import lombok.RequiredArgsConstructor;
@@ -45,6 +48,7 @@ public class FlashCardService {
     private final FlashCardRepository flashCardRepository;
     private final CardRepository cardRepository;
     private final FlashListCardRepository flashListCardRepository;
+    private final UserFlashCardStudyRepository userFlashCardStudyRepository;
     private final MediaService mediaService;
     private final AuthUtils authUtils;
 
@@ -98,6 +102,7 @@ public class FlashCardService {
                         .meaning(cardDTO.getMeaning())
                         .pronunciation(cardDTO.getPronunciation())
                         .exampleSentence(cardDTO.getExampleSentence())
+                        .previewUrl(cardDTO.getPreviewUrl())
                         .cardOrder(i)
                         .build();
                 })
@@ -153,6 +158,7 @@ public class FlashCardService {
                         .meaning(cardDTO.getMeaning())
                         .pronunciation(cardDTO.getPronunciation())
                         .exampleSentence(cardDTO.getExampleSentence())
+                        .previewUrl(cardDTO.getPreviewUrl())
                         .cardOrder(i)
                         .build();
                 })
@@ -197,6 +203,7 @@ public class FlashCardService {
             .meaning(cardDTO.getMeaning())
             .pronunciation(cardDTO.getPronunciation())
             .exampleSentence(cardDTO.getExampleSentence())
+            .previewUrl(cardDTO.getPreviewUrl())
             .cardOrder(nextOrder)
             .build();
         cardRepository.save(card);
@@ -250,6 +257,93 @@ public class FlashCardService {
         return flashCards.map(this::convertToDTO);
     }
 
+    /**
+     * Bắt đầu học một FlashCard.
+     * Nếu user chưa có trong danh sách học, thêm vào.
+     * Trả về thông tin tiến độ học của user.
+     */
+    @Transactional
+    public UserStudyProgressDTO startLearning(Long flashCardId) {
+        User currentUser = authUtils.getCurrentUser();
+        FlashCard flashCard = flashCardRepository.findByIdAndDeletedAtIsNull(flashCardId)
+            .orElseThrow(() -> new ResourceNotFoundException("FlashCard không tồn tại với id: " + flashCardId));
+
+        // Check if already studying
+        UserFlashCardStudy study = userFlashCardStudyRepository
+            .findByUserIdAndFlashCardId(currentUser.getId(), flashCardId)
+            .orElse(null);
+
+        if (study == null) {
+            // Create new study record
+            study = UserFlashCardStudy.builder()
+                .user(currentUser)
+                .flashCard(flashCard)
+                .progressPercentage(0)
+                .rememberedCount(0)
+                .totalCards(flashCard.getCardCount() != null ? flashCard.getCardCount() : 0)
+                .lastStudiedAt(LocalDateTime.now())
+                .nextReviewAt(LocalDateTime.now().plusDays(1))
+                .isCompleted(false)
+                .build();
+            study = userFlashCardStudyRepository.save(study);
+        } else {
+            // Update last studied time
+            study.setLastStudiedAt(LocalDateTime.now());
+            userFlashCardStudyRepository.save(study);
+        }
+
+        return UserStudyProgressDTO.builder()
+            .id(study.getId())
+            .progressPercentage(study.getProgressPercentage())
+            .rememberedCount(study.getRememberedCount())
+            .totalCards(study.getTotalCards())
+            .lastStudiedAt(study.getLastStudiedAt())
+            .nextReviewAt(study.getNextReviewAt())
+            .isCompleted(study.getIsCompleted())
+            .build();
+    }
+
+    /**
+     * Nộp bài tập exercise và cập nhật tiến độ học.
+     */
+    @Transactional
+    public void submitExerciseResult(Long flashCardId, String exerciseType, Integer correctCount, Integer totalCount) {
+        User currentUser = authUtils.getCurrentUser();
+        FlashCard flashCard = flashCardRepository.findByIdAndDeletedAtIsNull(flashCardId)
+            .orElseThrow(() -> new ResourceNotFoundException("FlashCard không tồn tại với id: " + flashCardId));
+
+        // Get or create study record
+        UserFlashCardStudy study = userFlashCardStudyRepository
+            .findByUserIdAndFlashCardId(currentUser.getId(), flashCardId)
+            .orElse(null);
+
+        if (study == null) {
+            study = UserFlashCardStudy.builder()
+                .user(currentUser)
+                .flashCard(flashCard)
+                .progressPercentage(0)
+                .rememberedCount(0)
+                .totalCards(flashCard.getCardCount() != null ? flashCard.getCardCount() : 0)
+                .lastStudiedAt(LocalDateTime.now())
+                .nextReviewAt(LocalDateTime.now().plusDays(1))
+                .isCompleted(false)
+                .build();
+        }
+
+        // Calculate new progress based on exercise results
+        int totalExercises = study.getTotalCards();
+        int newRememberedCount = Math.min(study.getRememberedCount() + correctCount, totalExercises);
+        int newProgressPercentage = totalExercises > 0 ? (int) ((newRememberedCount * 100.0) / totalExercises) : 0;
+
+        study.setRememberedCount(newRememberedCount);
+        study.setProgressPercentage(newProgressPercentage);
+        study.setLastStudiedAt(LocalDateTime.now());
+        study.setNextReviewAt(LocalDateTime.now().plusDays(1));
+        study.setIsCompleted(newProgressPercentage >= 100);
+
+        userFlashCardStudyRepository.save(study);
+    }
+
     private FlashCardResponseDTO convertToDTO(FlashCard flashCard) {
         UserSummaryDTO userSummary = UserSummaryDTO.builder()
             .id(flashCard.getUser().getId())
@@ -266,10 +360,36 @@ public class FlashCardService {
                 .meaning(card.getMeaning())
                 .pronunciation(card.getPronunciation())
                 .exampleSentence(card.getExampleSentence())
+                .previewUrl(card.getPreviewUrl())
                 .cardOrder(card.getCardOrder())
                 .createdAt(card.getCreatedAt())
                 .build())
             .collect(Collectors.toList());
+
+        // Get study count
+        Long studyCount = userFlashCardStudyRepository.countByFlashCardId(flashCard.getId());
+
+        // Get current user's progress
+        UserStudyProgressDTO userProgress = null;
+        try {
+            User currentUser = authUtils.getCurrentUser();
+            UserFlashCardStudy study = userFlashCardStudyRepository
+                .findByUserIdAndFlashCardId(currentUser.getId(), flashCard.getId())
+                .orElse(null);
+            if (study != null) {
+                userProgress = UserStudyProgressDTO.builder()
+                    .id(study.getId())
+                    .progressPercentage(study.getProgressPercentage())
+                    .rememberedCount(study.getRememberedCount())
+                    .totalCards(study.getTotalCards())
+                    .lastStudiedAt(study.getLastStudiedAt())
+                    .nextReviewAt(study.getNextReviewAt())
+                    .isCompleted(study.getIsCompleted())
+                    .build();
+            }
+        } catch (Exception e) {
+            // User not authenticated, skip progress
+        }
 
         return FlashCardResponseDTO.builder()
             .id(flashCard.getId())
@@ -283,6 +403,8 @@ public class FlashCardService {
             .cardCount(flashCard.getCardCount())
             .createdAt(flashCard.getCreatedAt())
             .updatedAt(flashCard.getUpdatedAt())
+            .studyCount(studyCount)
+            .userProgress(userProgress)
             .build();
     }
 

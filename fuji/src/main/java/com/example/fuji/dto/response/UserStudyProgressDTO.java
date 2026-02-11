@@ -11,13 +11,12 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CardResponseDTO {
+public class UserStudyProgressDTO {
     private Long id;
-    private String vocabulary;
-    private String meaning;
-    private String pronunciation;
-    private String exampleSentence;
-    private String previewUrl;
-    private Integer cardOrder;
-    private LocalDateTime createdAt;
+    private Integer progressPercentage;
+    private Integer rememberedCount;
+    private Integer totalCards;
+    private LocalDateTime lastStudiedAt;
+    private LocalDateTime nextReviewAt;
+    private Boolean isCompleted;
 }

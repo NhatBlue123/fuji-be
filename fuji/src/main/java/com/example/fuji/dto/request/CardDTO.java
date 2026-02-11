@@ -24,4 +24,6 @@ public class CardDTO {
     private String pronunciation;
 
     private String exampleSentence;
+
+    private String previewUrl;
 }
