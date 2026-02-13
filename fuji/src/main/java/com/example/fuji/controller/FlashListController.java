@@ -44,7 +44,7 @@ public class FlashListController {
         FlashListPageDTO result = flashListService.getAllFlashLists(page, limit);
         return ResponseEntity.ok(ApiResponse.<FlashListPageDTO>builder()
             .success(true)
-            .message("Lấy danh sách FlashList thành công")
+            .messageKey("flashlist.listSuccess")
             .data(result)
             .build());
     }
@@ -54,7 +54,7 @@ public class FlashListController {
         FlashListResponseDTO flashList = flashListService.getFlashListById(listId);
         return ResponseEntity.ok(ApiResponse.<FlashListResponseDTO>builder()
             .success(true)
-            .message("Lấy FlashList thành công")
+            .messageKey("flashlist.detailSuccess")
             .data(flashList)
             .build());
     }
@@ -72,16 +72,18 @@ public class FlashListController {
             for (ConstraintViolation<FlashListRequestDTO> violation : violations) {
                 errors.append(violation.getMessage()).append("; ");
             }
+            // Trả về chuỗi errors ở đây là technical; nếu muốn i18n hóa chi tiết từng lỗi
+            // có thể map sang field->messageKey sau này.
             return ResponseEntity.badRequest().body(ApiResponse.<FlashListResponseDTO>builder()
                 .success(false)
-                .message(errors.toString())
+                .messageKey("flashlist.validationFailed")
                 .build());
         }
 
         FlashListResponseDTO flashList = flashListService.createFlashList(dto, thumbnail);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.<FlashListResponseDTO>builder()
             .success(true)
-            .message("Tạo FlashList thành công")
+            .messageKey("flashlist.createSuccess")
             .data(flashList)
             .build());
     }
@@ -97,7 +99,7 @@ public class FlashListController {
 
         return ResponseEntity.ok(ApiResponse.<FlashListResponseDTO>builder()
             .success(true)
-            .message("Cập nhật FlashList thành công")
+            .messageKey("flashlist.updateSuccess")
             .data(flashList)
             .build());
     }
@@ -107,7 +109,7 @@ public class FlashListController {
         flashListService.deleteFlashList(listId);
         return ResponseEntity.ok(ApiResponse.<Void>builder()
             .success(true)
-            .message("Xóa FlashList thành công")
+            .messageKey("flashlist.deleteSuccess")
             .build());
     }
 
@@ -116,7 +118,7 @@ public class FlashListController {
         flashListService.deleteAllFlashLists(userId);
         return ResponseEntity.ok(ApiResponse.<Void>builder()
             .success(true)
-            .message("Xóa tất cả FlashList của user thành công")
+            .messageKey("flashlist.deleteAllSuccess")
             .build());
     }
 
@@ -128,7 +130,7 @@ public class FlashListController {
         FlashListResponseDTO flashList = flashListService.rateFlashList(listId, dto);
         return ResponseEntity.ok(ApiResponse.<FlashListResponseDTO>builder()
             .success(true)
-            .message("Đánh giá FlashList thành công")
+            .messageKey("flashlist.rateSuccess")
             .data(flashList)
             .build());
     }
@@ -141,7 +143,7 @@ public class FlashListController {
         FlashListResponseDTO flashList = flashListService.addFlashCardToList(listId, cardId);
         return ResponseEntity.ok(ApiResponse.<FlashListResponseDTO>builder()
             .success(true)
-            .message("Thêm FlashCard vào FlashList thành công")
+            .messageKey("flashlist.addCardSuccess")
             .data(flashList)
             .build());
     }
@@ -154,7 +156,7 @@ public class FlashListController {
         FlashListResponseDTO flashList = flashListService.removeFlashCardFromList(listId, cardId);
         return ResponseEntity.ok(ApiResponse.<FlashListResponseDTO>builder()
             .success(true)
-            .message("Xóa FlashCard khỏi FlashList thành công")
+            .messageKey("flashlist.removeCardSuccess")
             .data(flashList)
             .build());
     }
@@ -172,7 +174,7 @@ public class FlashListController {
 
         return ResponseEntity.ok(ApiResponse.builder()
             .success(true)
-            .message("Tìm kiếm FlashList thành công")
+            .messageKey("flashlist.searchSuccess")
             .data(java.util.Map.of(
                 "results", flashLists.getContent(),
                 "pagination", pagination

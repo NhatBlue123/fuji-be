@@ -21,7 +21,7 @@ public class StudyController {
         StudyQuizDTO quiz = studyService.getStudyDataFromFlashCard(cardId);
         return ResponseEntity.ok(ApiResponse.<StudyQuizDTO>builder()
             .success(true)
-            .message("Lấy dữ liệu học tập thành công")
+            .messageKey("Lấy dữ liệu học tập thành công")
             .data(quiz)
             .build());
     }
@@ -31,7 +31,7 @@ public class StudyController {
         StudyQuizDTO quiz = studyService.getStudyDataFromFlashList(listId);
         return ResponseEntity.ok(ApiResponse.<StudyQuizDTO>builder()
             .success(true)
-            .message("Lấy dữ liệu học tập thành công")
+            .messageKey("Lấy dữ liệu học tập thành công")
             .data(quiz)
             .build());
     }

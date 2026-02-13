@@ -38,21 +38,22 @@ public class AuthController {
     public ResponseEntity<ApiResponse<String>> sendOtpForRegistration(
             @Valid @RequestBody SendOtpRegisterDTO request) {
         authService.sendOtpForRegistration(request);
-        return ResponseEntity.ok(ApiResponse.success("OTP đã được gửi đến email " + request.getEmail()));
+        // Trả về messageKey để FE tự dịch (ví dụ auth.sendOtpSuccess)
+        return ResponseEntity.ok(ApiResponse.success("auth.sendOtpSuccess"));
     }
 
     @PostMapping("/register")
     @Operation(summary = "Đăng ký tài khoản - gửi đầy đủ thông tin + OTP")
     public ResponseEntity<ApiResponse<String>> register(@Valid @RequestBody RegisterDTO request) {
-        String message = authService.register(request);
-        return ResponseEntity.ok(ApiResponse.success(message));
+        String messageKey = authService.register(request);
+        return ResponseEntity.ok(ApiResponse.success(messageKey));
     }
 
     @PostMapping("/verify-otp")
     @Operation(summary = "Xác thực OTP")
     public ResponseEntity<ApiResponse<String>> verify(@Valid @RequestBody VerifyOtpDTO request) {
-        String result = authService.verifyOtp(request.getEmail(), request.getOtpCode());
-        return ResponseEntity.ok(ApiResponse.success(result));
+        String messageKey = authService.verifyOtp(request.getEmail(), request.getOtpCode());
+        return ResponseEntity.ok(ApiResponse.success(messageKey));
     }
 
     @PostMapping("/login")
@@ -77,7 +78,8 @@ public class AuthController {
                 authResponse.getAccessToken(),
                 authResponse.getUsername());
 
-        return ResponseEntity.ok(ApiResponse.success("Đăng nhập thành công", loginResponse));
+        // FE sẽ dùng t("auth.loginSuccess")
+        return ResponseEntity.ok(ApiResponse.success("auth.loginSuccess", loginResponse));
     }
 
     @PostMapping("/refresh")
@@ -101,7 +103,7 @@ public class AuthController {
         // ✅ Chỉ trả về access token mới trong JSON
         RefreshResponse refreshResponse = new RefreshResponse(authResponse.getAccessToken());
 
-        return ResponseEntity.ok(ApiResponse.success("Làm mới token thành công", refreshResponse));
+        return ResponseEntity.ok(ApiResponse.success("auth.refreshSuccess", refreshResponse));
     }
 
     @PostMapping("/logout")
@@ -118,6 +120,6 @@ public class AuthController {
         refreshCookie.setHttpOnly(true);
         response.addCookie(refreshCookie);
 
-        return ResponseEntity.ok(ApiResponse.success("Đăng xuất thành công"));
+        return ResponseEntity.ok(ApiResponse.success("auth.logoutSuccess"));
     }
 }

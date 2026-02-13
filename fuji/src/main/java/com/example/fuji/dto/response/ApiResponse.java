@@ -16,7 +16,11 @@ public class ApiResponse<T> {
     @Builder.Default
     private boolean success = true;
 
-    private String message;
+    /**
+     * i18n message key understood by the frontend (e.g. "auth.loginSuccess").
+     * Backend MUST NOT put human-readable Vietnamese/English text here.
+     */
+    private String messageKey;
 
     private T data;
 
@@ -25,24 +29,24 @@ public class ApiResponse<T> {
 
     public static <T> ApiResponse<T> success(T data) {
         return ApiResponse.<T>builder()
-                .success(true)
-                .data(data)
-                .build();
+            .success(true)
+            .data(data)
+            .build();
     }
 
-    public static <T> ApiResponse<T> success(String message, T data) {
+    public static <T> ApiResponse<T> success(String messageKey, T data) {
         return ApiResponse.<T>builder()
-                .success(true)
-                .message(message)
-                .data(data)
-                .build();
+            .success(true)
+            .messageKey(messageKey)
+            .data(data)
+            .build();
     }
 
-    public static <T> ApiResponse<T> success(String message) {
+    public static <T> ApiResponse<T> success(String messageKey) {
         return ApiResponse.<T>builder()
-                .success(true)
-                .message(message)
-                .build();
+            .success(true)
+            .messageKey(messageKey)
+            .build();
     }
 
 }

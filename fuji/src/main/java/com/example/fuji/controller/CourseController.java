@@ -48,7 +48,7 @@ public class CourseController {
         return ResponseEntity.ok(
                 ApiResponse.<Page<CourseResponseDTO>>builder()
                         .success(true)
-                        .message("Lấy danh sách khóa học thành công")
+                        .messageKey("Lấy danh sách khóa học thành công")
                         .data(courses)
                         .build());
     }
@@ -80,7 +80,7 @@ public class CourseController {
                     .status(201)
                     .body(ApiResponse.<CourseResponseDTO>builder()
                             .success(true)
-                            .message("Tạo khóa học thành công")
+                            .messageKey("Tạo khóa học thành công")
                             .data(createdCourse)
                             .build());
         } catch (IOException e) {
@@ -101,7 +101,7 @@ public class CourseController {
         return ResponseEntity.ok(
                 ApiResponse.<Page<CourseResponseDTO>>builder()
                         .success(true)
-                        .message("Lấy danh sách khóa học đã publish thành công")
+                        .messageKey("Lấy danh sách khóa học đã publish thành công")
                         .data(courses)
                         .build());
     }
@@ -118,7 +118,7 @@ public class CourseController {
         return ResponseEntity.ok(
                 ApiResponse.<Page<CourseResponseDTO>>builder()
                         .success(true)
-                        .message("Lấy danh sách khóa học của giảng viên thành công")
+                        .messageKey("Lấy danh sách khóa học của giảng viên thành công")
                         .data(courses)
                         .build());
     }
@@ -135,7 +135,7 @@ public class CourseController {
         return ResponseEntity.ok(
                 ApiResponse.<Page<CourseResponseDTO>>builder()
                         .success(true)
-                        .message("Tìm kiếm khóa học thành công")
+                        .messageKey("Tìm kiếm khóa học thành công")
                         .data(courses)
                         .build());
     }
@@ -147,7 +147,7 @@ public class CourseController {
         return ResponseEntity.ok(
                 ApiResponse.<CourseResponseDTO>builder()
                         .success(true)
-                        .message("Lấy thông tin khóa học thành công")
+                        .messageKey("Lấy thông tin khóa học thành công")
                         .data(course)
                         .build());
     }
@@ -178,7 +178,7 @@ public class CourseController {
             return ResponseEntity.ok(
                     ApiResponse.<CourseResponseDTO>builder()
                             .success(true)
-                            .message("Cập nhật khóa học thành công")
+                            .messageKey("Cập nhật khóa học thành công")
                             .data(updatedCourse)
                             .build());
         } catch (IOException e) {
@@ -193,7 +193,7 @@ public class CourseController {
         return ResponseEntity.ok(
                 ApiResponse.<Void>builder()
                         .success(true)
-                        .message("Xóa khóa học thành công")
+                        .messageKey("Xóa khóa học thành công")
                         .build());
     }
 }

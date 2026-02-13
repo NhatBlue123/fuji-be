@@ -47,7 +47,7 @@ public class FlashCardController {
 
         return ResponseEntity.ok(ApiResponse.builder()
             .success(true)
-            .message("Lấy danh sách FlashCard thành công")
+            .messageKey("Lấy danh sách FlashCard thành công")
             .data(java.util.Map.of(
                 "flashCards", flashCards.getContent(),
                 "pagination", pagination
@@ -60,7 +60,7 @@ public class FlashCardController {
         FlashCardResponseDTO flashCard = flashCardService.getFlashCardById(cardId);
         return ResponseEntity.ok(ApiResponse.<FlashCardResponseDTO>builder()
             .success(true)
-            .message("Lấy FlashCard thành công")
+            .messageKey("Lấy FlashCard thành công")
             .data(flashCard)
             .build());
     }
@@ -80,14 +80,14 @@ public class FlashCardController {
             }
             return ResponseEntity.badRequest().body(ApiResponse.<FlashCardResponseDTO>builder()
                 .success(false)
-                .message(errors.toString())
+                .messageKey(errors.toString())
                 .build());
         }
 
         FlashCardResponseDTO flashCard = flashCardService.createFlashCard(dto, thumbnail);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.<FlashCardResponseDTO>builder()
             .success(true)
-            .message("Tạo FlashCard thành công")
+            .messageKey("Tạo FlashCard thành công")
             .data(flashCard)
             .build());
     }
@@ -103,7 +103,7 @@ public class FlashCardController {
 
         return ResponseEntity.ok(ApiResponse.<FlashCardResponseDTO>builder()
             .success(true)
-            .message("Cập nhật FlashCard thành công")
+            .messageKey("Cập nhật FlashCard thành công")
             .data(flashCard)
             .build());
     }
@@ -113,7 +113,7 @@ public class FlashCardController {
         flashCardService.deleteFlashCard(cardId);
         return ResponseEntity.ok(ApiResponse.<Void>builder()
             .success(true)
-            .message("Xóa FlashCard thành công")
+            .messageKey("Xóa FlashCard thành công")
             .build());
     }
 
@@ -125,7 +125,7 @@ public class FlashCardController {
         FlashCardResponseDTO flashCard = flashCardService.addCardToFlashCard(cardId, cardDTO);
         return ResponseEntity.ok(ApiResponse.<FlashCardResponseDTO>builder()
             .success(true)
-            .message("Thêm thẻ vào FlashCard thành công")
+            .messageKey("Thêm thẻ vào FlashCard thành công")
             .data(flashCard)
             .build());
     }
@@ -138,7 +138,7 @@ public class FlashCardController {
         FlashCardResponseDTO flashCard = flashCardService.deleteCardFromFlashCard(cardId, cardIndex);
         return ResponseEntity.ok(ApiResponse.<FlashCardResponseDTO>builder()
             .success(true)
-            .message("Xóa thẻ khỏi FlashCard thành công")
+            .messageKey("Xóa thẻ khỏi FlashCard thành công")
             .data(flashCard)
             .build());
     }
@@ -156,7 +156,7 @@ public class FlashCardController {
 
         return ResponseEntity.ok(ApiResponse.builder()
             .success(true)
-            .message("Tìm kiếm FlashCard thành công")
+            .messageKey("Tìm kiếm FlashCard thành công")
             .data(java.util.Map.of(
                 "results", flashCards.getContent(),
                 "pagination", pagination
@@ -173,7 +173,7 @@ public class FlashCardController {
         UserStudyProgressDTO progress = flashCardService.startLearning(cardId);
         return ResponseEntity.ok(ApiResponse.<UserStudyProgressDTO>builder()
             .success(true)
-            .message("Bắt đầu học FlashCard thành công")
+            .messageKey("Bắt đầu học FlashCard thành công")
             .data(progress)
             .build());
     }
@@ -188,7 +188,7 @@ public class FlashCardController {
         flashCardService.submitExerciseResult(cardId, request.getExerciseType(), request.getCorrectCount(), request.getTotalCount());
         return ResponseEntity.ok(ApiResponse.<Void>builder()
             .success(true)
-            .message("Nộp bài tập thành công")
+            .messageKey("Nộp bài tập thành công")
             .build());
     }
 }

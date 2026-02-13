@@ -37,7 +37,7 @@ public class UserController {
         return ResponseEntity.ok(
             ApiResponse.<Page<UserDTO>>builder()
                 .success(true)
-                .message("Lấy danh sách người dùng thành công")
+                .messageKey("Lấy danh sách người dùng thành công")
                 .data(users)
                 .build()
         );
@@ -49,7 +49,7 @@ public class UserController {
         return ResponseEntity.ok(
             ApiResponse.<UserDTO>builder()
                 .success(true)
-                .message("Lấy thông tin người dùng thành công")
+                .messageKey("Lấy thông tin người dùng thành công")
                 .data(user)
                 .build()
         );
@@ -63,7 +63,7 @@ public class UserController {
         return ResponseEntity.ok(
             ApiResponse.<UserDTO>builder()
                 .success(true)
-                .message("Lấy thông tin người dùng thành công")
+                .messageKey("Lấy thông tin người dùng thành công")
                 .data(user)
                 .build()
         );
@@ -76,7 +76,7 @@ public class UserController {
         return ResponseEntity.ok(
             ApiResponse.<UserDTO>builder()
                 .success(true)
-                .message("Lấy thông tin người dùng thành công")
+                .messageKey("Lấy thông tin người dùng thành công")
                 .data(user)
                 .build()
         );
@@ -89,7 +89,7 @@ public class UserController {
         return ResponseEntity.ok(
             ApiResponse.<UserDTO>builder()
                 .success(true)
-                .message("Lấy thông tin người dùng thành công")
+                .messageKey("Lấy thông tin người dùng thành công")
                 .data(user)
                 .build()
         );
@@ -102,7 +102,7 @@ public class UserController {
         return ResponseEntity.status(201).body(
             ApiResponse.<UserDTO>builder()
                 .success(true)
-                .message("Tạo người dùng thành công")
+                .messageKey("Tạo người dùng thành công")
                 .data(createdUser)
                 .build()
         );
@@ -115,7 +115,7 @@ public class UserController {
         return ResponseEntity.ok(
             ApiResponse.<UserDTO>builder()
                 .success(true)
-                .message("Cập nhật thông tin người dùng thành công")
+                .messageKey("Cập nhật thông tin người dùng thành công")
                 .data(updatedUser)
                 .build()
         );
@@ -128,7 +128,7 @@ public class UserController {
         return ResponseEntity.ok(
             ApiResponse.<Void>builder()
                 .success(true)
-                .message("Xóa người dùng thành công")
+                .messageKey("Xóa người dùng thành công")
                 .build()
         );
     }
