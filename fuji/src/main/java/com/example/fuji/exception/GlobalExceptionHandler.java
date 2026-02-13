@@ -23,16 +23,20 @@ public class GlobalExceptionHandler {
         ex.getBindingResult().getAllErrors().forEach(error -> {
             String fieldName = ((FieldError) error).getField();
             String errorMessage = error.getDefaultMessage();
+            // IMPORTANT: errorMessage here is expected to be an i18n key configured on the validator,
+            // not a human-readable Vietnamese/English string.
             errors.put(fieldName, errorMessage);
         });
 
-        String message = errors.values().stream().findFirst()
-                .orElse("Dữ liệu không hợp lệ");
+        String messageKey = errors.values().stream()
+                .findFirst()
+                // Fallback i18n key if none is present
+                .orElse("api.validation.invalid");
 
         ErrorResponse response = new ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
                 "Validation Failed",
-                message,
+                messageKey,
                 errors
         );
 
@@ -44,7 +48,8 @@ public class GlobalExceptionHandler {
         ErrorResponse response = new ErrorResponse(
                 HttpStatus.UNAUTHORIZED.value(),
                 "Unauthorized",
-                "Tên đăng nhập hoặc mật khẩu không đúng"
+                "auth.invalidCredentials"
+
         );
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
@@ -54,7 +59,7 @@ public class GlobalExceptionHandler {
         ErrorResponse response = new ErrorResponse(
                 HttpStatus.FORBIDDEN.value(),
                 "Forbidden",
-                "Tài khoản chưa được kích hoạt hoặc đã bị khóa"
+                "auth.accountDisabled"
         );
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
     }
@@ -70,6 +75,7 @@ public class GlobalExceptionHandler {
         ErrorResponse response = new ErrorResponse(
                 status.value(),
                 status.getReasonPhrase(),
+                // Custom exceptions should carry an i18n key in ex.getMessage()
                 ex.getMessage()
         );
         return ResponseEntity.status(status).body(response);
@@ -81,7 +87,7 @@ public class GlobalExceptionHandler {
         ErrorResponse response = new ErrorResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 "Internal Server Error",
-                "Đã xảy ra lỗi hệ thống"
+                "api.unexpectedError"
         );
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }

@@ -50,12 +50,14 @@ public class AuthService {
 
         // Check email đã tồn tại
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new ConflictException("Email đã tồn tại!");
+            // FE: t("auth.emailAlreadyExists")
+            throw new ConflictException("auth.emailAlreadyExists");
         }
 
         // Check username đã tồn tại
         if (userRepository.existsByUsername(request.getUsername())) {
-            throw new ConflictException("Tên đăng nhập đã tồn tại!");
+            // FE: t("auth.usernameAlreadyExists")
+            throw new ConflictException("auth.usernameAlreadyExists");
         }
 
         // Tạo và gửi OTP
@@ -74,24 +76,29 @@ public class AuthService {
      * Verify OTP trước → validate thông tin → tạo user (active ngay)
      */
     @Transactional
+    /**
+     * Đăng ký tài khoản - trả về messageKey cho FE.
+     */
     public String register(RegisterDTO request) {
         log.info("Đăng ký user: {}, Email: {}", request.getUsername(), request.getEmail());
 
         // 1. Verify OTP trước
         Otp otp = otpRepository.findByEmailAndOtpCode(request.getEmail(), request.getOtpCode())
-                .orElseThrow(() -> new UnauthorizedException("Mã OTP không chính xác!"));
+                // FE: t("auth.otpInvalid")
+                .orElseThrow(() -> new UnauthorizedException("auth.otpInvalid"));
 
         if (otp.getExpiresAt().isBefore(LocalDateTime.now())) {
             otpRepository.delete(otp);
-            throw new UnauthorizedException("Mã OTP đã hết hạn!");
+            // FE: t("auth.otpExpired")
+            throw new UnauthorizedException("auth.otpExpired");
         }
 
         // 2. Validate thông tin
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new ConflictException("Email đã tồn tại!");
+            throw new ConflictException("auth.emailAlreadyExists");
         }
         if (userRepository.existsByUsername(request.getUsername())) {
-            throw new ConflictException("Username đã tồn tại!");
+            throw new ConflictException("auth.usernameAlreadyExists");
         }
 
         // 3. Tạo user - active ngay vì đã verify OTP
@@ -107,24 +114,29 @@ public class AuthService {
         otpRepository.delete(otp);
 
         log.info("🎉 Đăng ký thành công cho user: {}", request.getUsername());
-        return "Đăng ký thành công! Bạn có thể đăng nhập ngay.";
+        // FE: t("auth.registerSuccess")
+        return "auth.registerSuccess";
     }
 
     /**
      * Xác thực OTP (dùng cho verify email, forgot password, v.v.)
      */
     @Transactional
+    /**
+     * Xác thực OTP - trả về messageKey cho FE.
+     */
     public String verifyOtp(String email, String otpCode) {
         Otp otp = otpRepository.findByEmailAndOtpCode(email, otpCode)
-                .orElseThrow(() -> new UnauthorizedException("Mã OTP không chính xác!"));
+                .orElseThrow(() -> new UnauthorizedException("auth.otpInvalid"));
 
         if (otp.getExpiresAt().isBefore(LocalDateTime.now())) {
             otpRepository.delete(otp);
-            throw new UnauthorizedException("Mã OTP đã hết hạn!");
+            throw new UnauthorizedException("auth.otpExpired");
         }
 
         otpRepository.delete(otp);
-        return "Xác thực OTP thành công!";
+        // FE: t("auth.verifyOtpSuccess")
+        return "auth.verifyOtpSuccess";
     }
 
     public AuthResponse login(AuthDTO authRequest) {
@@ -136,10 +148,10 @@ public class AuthService {
 
         // Get user and verify active status
         User user = userRepository.findByUsername(authRequest.getUsername())
-                .orElseThrow(() -> new ResourceNotFoundException("Người dùng không tồn tại"));
+                .orElseThrow(() -> new ResourceNotFoundException("auth.userNotFound"));
 
         if (!user.getIsActive()) {
-            throw new UnauthorizedException("Tài khoản chưa được kích hoạt!");
+            throw new UnauthorizedException("auth.accountNotActivated");
         }
 
         // Generate tokens
