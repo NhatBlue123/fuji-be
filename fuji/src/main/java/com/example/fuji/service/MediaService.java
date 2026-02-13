@@ -1,6 +1,7 @@
 package com.example.fuji.service;
 
 import com.cloudinary.Cloudinary;
+import com.cloudinary.Transformation;
 import com.example.fuji.dto.request.MediaDTO;
 import com.example.fuji.utils.MediaValidator;
 
@@ -14,7 +15,6 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -49,44 +49,40 @@ public class MediaService {
         mediaValidator.validate(file);
         mediaValidator.isVideo(file);
 
-        try (InputStream is = file.getInputStream()) {
-            Map<String, Object> uploadResult = cloudinary.uploader().upload(is, Map.of(
-                "resource_type", "video",
-                "public_id", generateUniqueId(),
-                "folder", "fuji/videos",
-                "eager", List.of(Map.of(
-                    "width", 1000,
-                    "crop", "scale",
-                    "quality", "auto:best",
-                    "fetch_format", "auto"
-                )),
-                "eager_async", true
-            ));
+        Transformation eagerTransform = new Transformation()
+            .width(1000).crop("scale").quality("auto:best").fetchFormat("auto");
 
-            log.info("Video tải thành công: {}", uploadResult.get("secure_url"));
-            return buildMediaDTO(uploadResult, "video");
-        }
+        Map<String, Object> params = new java.util.HashMap<>();
+        params.put("resource_type", "video");
+        params.put("public_id", generateUniqueId());
+        params.put("folder", "fuji/videos");
+        params.put("eager", List.of(eagerTransform));
+        params.put("eager_async", true);
+
+        Map<String, Object> uploadResult = cloudinary.uploader().upload(file.getBytes(), params);
+
+        log.info("Video tải thành công: {}", uploadResult.get("secure_url"));
+        return buildMediaDTO(uploadResult, "video");
     }
 
     @SuppressWarnings("unchecked")
     public MediaDTO uploadAudio(MultipartFile file) throws IOException {
         mediaValidator.validate(file);
         mediaValidator.isAudio(file);
-        try (InputStream is = file.getInputStream()) {
-            Map<String, Object> uploadResult = cloudinary.uploader().upload(is, Map.of(
-                "resource_type", "auto",
-                "public_id", generateUniqueId(),
-                "folder", "fuji/audios",
-                "format", "mp3",
-                "transformation", List.of(
-                    Map.of("quality", "auto:best"),
-                    Map.of("fetch_format", "auto")
-                )
-            ));
+        Transformation audioTransform = new Transformation()
+            .quality("auto:best").fetchFormat("auto");
 
-            log.info("Tải audio thành công: {}", uploadResult.get("secure_url"));
-            return buildMediaDTO(uploadResult, "audio");
-        }
+        Map<String, Object> params = new java.util.HashMap<>();
+        params.put("resource_type", "auto");
+        params.put("public_id", generateUniqueId());
+        params.put("folder", "fuji/audios");
+        params.put("format", "mp3");
+        params.put("transformation", audioTransform);
+
+        Map<String, Object> uploadResult = cloudinary.uploader().upload(file.getBytes(), params);
+
+        log.info("Tải audio thành công: {}", uploadResult.get("secure_url"));
+        return buildMediaDTO(uploadResult, "audio");
     }
 
     public void deleteMedia(String publicId, String resourceType) throws Exception {
