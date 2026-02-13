@@ -1,9 +1,11 @@
 package com.example.fuji.filter;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -41,10 +43,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (jwtUtils.validateJwtToken(jwt)) {
             Long userId = jwtUtils.getUserIdFromJwtToken(jwt);
             String username = jwtUtils.getUserNameFromJwtToken(jwt);
+            String role = jwtUtils.getRoleFromJwtToken(jwt);
 
-            // Tạo UserPrincipal trực tiếp từ JWT (không query DB)
+            // Build authorities from JWT role claim (e.g. ADMIN -> ROLE_ADMIN)
+            List<SimpleGrantedAuthority> authorities = new java.util.ArrayList<>();
+            if (role != null && !role.isEmpty()) {
+                authorities.add(new SimpleGrantedAuthority("ROLE_" + role));
+            }
+
             com.example.fuji.security.UserPrincipal userPrincipal = new com.example.fuji.security.UserPrincipal(userId,
-                    username, "", new java.util.ArrayList<>());
+                    username, "", authorities);
 
             UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                     userPrincipal, null, userPrincipal.getAuthorities());

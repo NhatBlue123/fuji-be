@@ -142,8 +142,8 @@ public class AuthService {
             throw new UnauthorizedException("Tài khoản chưa được kích hoạt!");
         }
 
-        // Generate tokens
-        String accessToken = jwtUtils.generateTokenFromUsername(user.getUsername(), user.getId());
+        // Generate tokens (include role in JWT)
+        String accessToken = jwtUtils.generateTokenFromUsername(user.getUsername(), user.getId(), user.getRole().name());
         String refreshToken = refreshTokenService.createRefreshToken(user).getToken();
 
         return new AuthResponse(accessToken, refreshToken, user.getUsername(), user.getEmail());
@@ -154,7 +154,7 @@ public class AuthService {
         var newRefreshToken = refreshTokenService.verifyAndRotate(refreshToken);
         User user = newRefreshToken.getUser();
 
-        String accessToken = jwtUtils.generateTokenFromUsername(user.getUsername(), user.getId());
+        String accessToken = jwtUtils.generateTokenFromUsername(user.getUsername(), user.getId(), user.getRole().name());
         return new AuthResponse(accessToken, newRefreshToken.getToken(), user.getUsername(), user.getEmail());
     }
 

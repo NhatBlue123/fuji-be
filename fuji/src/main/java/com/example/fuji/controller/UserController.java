@@ -1,7 +1,10 @@
 package com.example.fuji.controller;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import com.example.fuji.dto.response.ApiResponse;
@@ -42,6 +45,20 @@ public class UserController {
                 .build()
         );
     }
+    @GetMapping("/instructors")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Lấy danh sách giảng viên (ADMIN only)")
+    public ResponseEntity<ApiResponse<List<UserDTO>>> getInstructors() {
+        List<UserDTO> instructors = userService.getInstructors();
+        return ResponseEntity.ok(
+            ApiResponse.<List<UserDTO>>builder()
+                .success(true)
+                .message("Lấy danh sách giảng viên thành công")
+                .data(instructors)
+                .build()
+        );
+    }
+
     @GetMapping("/me")
     @Operation(summary = "Lấy thông tin người dùng hiện tại")
     public ResponseEntity<ApiResponse<UserDTO>> getMe() {
@@ -109,7 +126,8 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Cập nhật thông tin người dùng")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Cập nhật thông tin người dùng (chỉ ADMIN)")
     public ResponseEntity<ApiResponse<UserDTO>> updateUser(@PathVariable Long id, @RequestBody UserDTO userDTO) {
         UserDTO updatedUser = userService.updateUser(id, userDTO);
         return ResponseEntity.ok(
