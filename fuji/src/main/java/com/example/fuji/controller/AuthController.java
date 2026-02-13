@@ -1,5 +1,9 @@
 package com.example.fuji.controller;
 
+import java.time.Duration;
+
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -63,14 +67,8 @@ public class AuthController {
 
         AuthResponse authResponse = authService.login(authRequest);
 
-        // Set refreshToken vào HttpOnly cookie (bảo mật cao)
-        jakarta.servlet.http.Cookie refreshCookie = new jakarta.servlet.http.Cookie("refreshToken",
-                authResponse.getRefreshToken());
-        refreshCookie.setHttpOnly(true);
-        refreshCookie.setSecure(false); // Set true khi deploy production với HTTPS
-        refreshCookie.setPath("/");
-        refreshCookie.setMaxAge(7 * 24 * 60 * 60); // 7 ngày
-        response.addCookie(refreshCookie);
+        // Set refreshToken vào HttpOnly cookie (bảo mật cao) with SameSite
+        addRefreshTokenCookie(response, authResponse.getRefreshToken());
 
         // ✅ Access token trả về trong JSON body (client tự quản lý)
         LoginResponse loginResponse = new LoginResponse(
@@ -83,20 +81,19 @@ public class AuthController {
     @PostMapping("/refresh")
     @Operation(summary = "Làm mới access token")
     public ResponseEntity<ApiResponse<RefreshResponse>> refresh(
-            @CookieValue(name = "refreshToken", required = true) String refreshToken,
+            @CookieValue(name = "refreshToken", required = false) String refreshToken,
             jakarta.servlet.http.HttpServletResponse response) {
+
+        if (refreshToken == null || refreshToken.isBlank()) {
+            return ResponseEntity.status(401)
+                    .body(ApiResponse.error("Refresh token không tồn tại"));
+        }
 
         // ✅ Refresh token CHỈ đọc từ HttpOnly cookie (không cho phép từ body)
         AuthResponse authResponse = authService.refreshAccessToken(refreshToken);
 
-        // ✅ Rotate refresh token (set cookie mới)
-        jakarta.servlet.http.Cookie newRefreshCookie = new jakarta.servlet.http.Cookie("refreshToken",
-                authResponse.getRefreshToken());
-        newRefreshCookie.setHttpOnly(true);
-        newRefreshCookie.setSecure(false); // TODO: Set true khi deploy production
-        newRefreshCookie.setPath("/");
-        newRefreshCookie.setMaxAge(7 * 24 * 60 * 60);
-        response.addCookie(newRefreshCookie);
+        // ✅ Rotate refresh token (set cookie mới) with SameSite
+        addRefreshTokenCookie(response, authResponse.getRefreshToken());
 
         // ✅ Chỉ trả về access token mới trong JSON
         RefreshResponse refreshResponse = new RefreshResponse(authResponse.getAccessToken());
@@ -111,13 +108,32 @@ public class AuthController {
         authService.logout(userId);
 
         // Xóa refresh token cookie
-
-        jakarta.servlet.http.Cookie refreshCookie = new jakarta.servlet.http.Cookie("refreshToken", null);
-        refreshCookie.setPath("/");
-        refreshCookie.setMaxAge(0);
-        refreshCookie.setHttpOnly(true);
-        response.addCookie(refreshCookie);
+        clearRefreshTokenCookie(response);
 
         return ResponseEntity.ok(ApiResponse.success("Đăng xuất thành công"));
+    }
+
+    // ─── Cookie Helpers ───────────────────────────────────────
+
+    private void addRefreshTokenCookie(jakarta.servlet.http.HttpServletResponse response, String token) {
+        ResponseCookie cookie = ResponseCookie.from("refreshToken", token)
+                .httpOnly(true)
+                .secure(false)        // TODO: true khi deploy production với HTTPS
+                .path("/")
+                .maxAge(Duration.ofDays(7))
+                .sameSite("Lax")       // Cho phép same-site requests (localhost)
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+    }
+
+    private void clearRefreshTokenCookie(jakarta.servlet.http.HttpServletResponse response) {
+        ResponseCookie cookie = ResponseCookie.from("refreshToken", "")
+                .httpOnly(true)
+                .secure(false)
+                .path("/")
+                .maxAge(0)
+                .sameSite("Lax")
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
 }
