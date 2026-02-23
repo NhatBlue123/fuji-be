@@ -2,7 +2,9 @@ package com.example.fuji.controller;
 
 import com.example.fuji.dto.request.MediaDTO;
 import com.example.fuji.dto.response.ApiResponse;
+import com.example.fuji.dto.response.ImageSearchResponse;
 import com.example.fuji.exception.BadRequestException;
+import com.example.fuji.service.ImageSearchService;
 import com.example.fuji.service.MediaService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -17,10 +19,11 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Media", description = "API quản lý media (upload/delete)")
-@SecurityRequirement(name = "bearerAuth") 
+@SecurityRequirement(name = "bearerAuth")
 public class MediaController {
 
     private final MediaService mediaService;
+    private final ImageSearchService imageSearchService;
 
     @PostMapping("/upload/image")
     public ResponseEntity<ApiResponse<MediaDTO>> uploadImage(
@@ -73,6 +76,15 @@ public class MediaController {
             log.error("Xóa media thất bại", e);
             throw new BadRequestException("Xóa media thất bại: " + e.getMessage());
         }
+    }
+
+    @GetMapping("/image-search")
+    public ResponseEntity<ApiResponse<ImageSearchResponse>> searchImages(
+        @RequestParam("q") String query,
+        @RequestParam(value = "num", defaultValue = "10") int num
+    ) {
+        ImageSearchResponse result = imageSearchService.search(query, num);
+        return ResponseEntity.ok(ApiResponse.success(result));
     }
 
 }

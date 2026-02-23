@@ -1,8 +1,10 @@
 package com.example.fuji.controller;
 
+
 // import org.springframework.http.HttpHeaders;
 // import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -10,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.fuji.dto.request.AuthDTO;
 import com.example.fuji.dto.request.RegisterDTO;
+import com.example.fuji.dto.request.SendOtpRegisterDTO;
 import com.example.fuji.dto.request.VerifyOtpDTO;
 import com.example.fuji.dto.response.ApiResponse;
 import com.example.fuji.dto.response.AuthResponse;
@@ -19,22 +22,37 @@ import com.example.fuji.service.AuthService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 //import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.CookieValue;
 
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 @Tag(name = "Authentication", description = "API xác thực người dùng")
+@Slf4j
 public class AuthController {
 
     private final AuthService authService;
     private final com.example.fuji.utils.AuthUtils authUtils;
 
+    @PostMapping("/send-otp-register")
+    @Operation(summary = "Validate thông tin + Gửi OTP để đăng ký - KHÔNG tạo tài khoản")
+    public ResponseEntity<ApiResponse<String>> sendOtpForRegistration(
+            @Valid @RequestBody SendOtpRegisterDTO request) {
+        authService.sendOtpForRegistration(request);
+        return ResponseEntity.ok(ApiResponse.success("OTP đã được gửi đến email " + request.getEmail()));
+    }
+
     @PostMapping("/register")
-    @Operation(summary = "Đăng ký tài khoản mới")
+    @Operation(summary = "Đăng ký tài khoản - gửi đầy đủ thông tin + OTP")
     public ResponseEntity<ApiResponse<String>> register(@Valid @RequestBody RegisterDTO request) {
         String message = authService.register(request);
         return ResponseEntity.ok(ApiResponse.success(message));
@@ -56,7 +74,8 @@ public class AuthController {
         AuthResponse authResponse = authService.login(authRequest);
 
         // Set refreshToken vào HttpOnly cookie (bảo mật cao)
-        jakarta.servlet.http.Cookie refreshCookie = new jakarta.servlet.http.Cookie("refreshToken", authResponse.getRefreshToken());
+        jakarta.servlet.http.Cookie refreshCookie = new jakarta.servlet.http.Cookie("refreshToken",
+                authResponse.getRefreshToken());
         refreshCookie.setHttpOnly(true);
         refreshCookie.setSecure(false); // Set true khi deploy production với HTTPS
         refreshCookie.setPath("/");
@@ -65,9 +84,8 @@ public class AuthController {
 
         // ✅ Access token trả về trong JSON body (client tự quản lý)
         LoginResponse loginResponse = new LoginResponse(
-            authResponse.getAccessToken(),
-            authResponse.getUsername()
-        );
+                authResponse.getAccessToken(),
+                authResponse.getUsername());
 
         return ResponseEntity.ok(ApiResponse.success("Đăng nhập thành công", loginResponse));
     }
@@ -79,13 +97,16 @@ public class AuthController {
             jakarta.servlet.http.HttpServletResponse response) {
 
         // ✅ Refresh token CHỈ đọc từ HttpOnly cookie (không cho phép từ body)
-
         AuthResponse authResponse = authService.refreshAccessToken(refreshToken);
 
         // ✅ Rotate refresh token (set cookie mới)
-        jakarta.servlet.http.Cookie newRefreshCookie = new jakarta.servlet.http.Cookie("refreshToken", authResponse.getRefreshToken());
+        jakarta.servlet.http.Cookie newRefreshCookie = new jakarta.servlet.http.Cookie("refreshToken",
+                authResponse.getRefreshToken());
         newRefreshCookie.setHttpOnly(true);
+
         newRefreshCookie.setSecure(false);  
+
+        newRefreshCookie.setSecure(false); 
         newRefreshCookie.setPath("/");
         newRefreshCookie.setMaxAge(7 * 24 * 60 * 60);
         response.addCookie(newRefreshCookie);

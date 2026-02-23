@@ -12,6 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.example.fuji.enums.Gender;
+import com.example.fuji.enums.JlptLevel;
 
 @Service
 @RequiredArgsConstructor
@@ -40,39 +42,59 @@ public class UserServiceImpl implements UserService {
         user.setFullName(request.getFullName());
         user.setBio(request.getBio());
         user.setPhone(request.getPhone());
-        user.setGender(request.getGender());
-        user.setJlptLevel(request.getJlptLevel());
+        user.setGender(parseGender(request.getGender()));
+        user.setJlptLevel(parseJlptLevel(request.getJlptLevel()));
 
         userRepository.save(user);
 
         return UserProfileResponse.from(user);
     }
 
-    @Autowired
-private PasswordEncoder passwordEncoder;
+    private Gender parseGender(String gender) {
+        if (gender == null)
+            return null;
 
-@Override
-public void changePassword(Long userId, ChangePasswordRequest request) {
-
-    User user = userRepository.findById(userId)
-            .orElseThrow(() -> new RuntimeException("User not found"));
-
-    // 1️⃣ Kiểm tra mật khẩu hiện tại
-    if (!passwordEncoder.matches(
-            request.getCurrentPassword(),
-            user.getPasswordHash())) {
-
-        throw new RuntimeException("Current password is incorrect");
+        try {
+            return Gender.valueOf(gender.trim().toLowerCase());
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Invalid gender value");
+        }
     }
 
-    // 2️⃣ Encode mật khẩu mới
-    String newPasswordHash =
-            passwordEncoder.encode(request.getNewPassword());
+    private JlptLevel parseJlptLevel(String level) {
+        if (level == null)
+            return null;
 
-    // 3️⃣ Lưu vào DB
-    user.setPasswordHash(newPasswordHash);
+        try {
+            return JlptLevel.valueOf(level.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Invalid JLPT level");
+        }
+    }
 
-    userRepository.save(user);
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Override
+    public void changePassword(Long userId, ChangePasswordRequest request) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // 1️⃣ Kiểm tra mật khẩu hiện tại
+        if (!passwordEncoder.matches(
+                request.getCurrentPassword(),
+                user.getPasswordHash())) {
+
+            throw new RuntimeException("Current password is incorrect");
+        }
+
+        // 2️⃣ Encode mật khẩu mới
+        String newPasswordHash = passwordEncoder.encode(request.getNewPassword());
+
+        // 3️⃣ Lưu vào DB
+        user.setPasswordHash(newPasswordHash);
+
+        userRepository.save(user);
+    }
 }
-}
-

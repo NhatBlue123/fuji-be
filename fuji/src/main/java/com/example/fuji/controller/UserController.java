@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 import com.example.fuji.security.UserPrincipal;
-
+import java.util.Map;
 @RestController
 @RequestMapping("/api/users/me")
 @RequiredArgsConstructor
@@ -54,7 +54,9 @@ public class UserController {
 
         userService.changePassword(userId, request);
 
-        return ResponseEntity.ok("Password changed successfully");
+        return ResponseEntity.ok(
+        Map.of("message", "Password changed successfully")
+    );
     }
 }
 // import org.springframework.data.domain.Page;
