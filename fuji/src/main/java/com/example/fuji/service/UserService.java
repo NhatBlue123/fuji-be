@@ -16,10 +16,6 @@ public interface UserService {
 }
 
 
-// public interface UserService {
-//     UserProfileResponse getMyProfile(String username);
-//     UserProfileResponse updateMyProfile(String username, UpdateProfileRequest request);
-// }
 
 // import org.springframework.data.domain.Page;
 // import org.springframework.data.domain.PageRequest;
