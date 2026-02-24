@@ -27,12 +27,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 //import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.CookieValue;
 
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
 
 @RestController
 @RequestMapping("/api/auth")
@@ -124,10 +120,10 @@ public class AuthController {
     private void addRefreshTokenCookie(jakarta.servlet.http.HttpServletResponse response, String token) {
         ResponseCookie cookie = ResponseCookie.from("refreshToken", token)
                 .httpOnly(true)
-                .secure(false)        // TODO: true khi deploy production với HTTPS
+                .secure(false) // TODO: true khi deploy production với HTTPS
                 .path("/")
                 .maxAge(Duration.ofDays(7))
-                .sameSite("Lax")       // Cho phép same-site requests (localhost)
+                .sameSite("Lax") // Cho phép same-site requests (localhost)
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }

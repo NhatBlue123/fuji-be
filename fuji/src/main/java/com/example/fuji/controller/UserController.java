@@ -2,19 +2,21 @@ package com.example.fuji.controller;
 
 import java.util.List;
 
-import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import com.example.fuji.dto.UpdateProfileRequest;
+import com.example.fuji.dto.UserProfileResponse;
+import com.example.fuji.dto.request.ChangePasswordRequest;
 import com.example.fuji.dto.response.ApiResponse;
 import com.example.fuji.dto.response.UserDTO;
 import com.example.fuji.service.UserService;
+
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 import com.example.fuji.security.UserPrincipal;
@@ -32,26 +34,20 @@ public class UserController {
             Authentication authentication) {
 
         UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
-        return ResponseEntity.ok(
-            ApiResponse.<Page<UserDTO>>builder()
-                .success(true)
-                .message("Lấy danh sách người dùng thành công")
-                .data(users)
-                .build()
-        );
+        return ResponseEntity.ok(userService.getMyProfileById(principal.getId()));
     }
+
     @GetMapping("/instructors")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Lấy danh sách giảng viên (ADMIN only)")
     public ResponseEntity<ApiResponse<List<UserDTO>>> getInstructors() {
         List<UserDTO> instructors = userService.getInstructors();
         return ResponseEntity.ok(
-            ApiResponse.<List<UserDTO>>builder()
-                .success(true)
-                .message("Lấy danh sách giảng viên thành công")
-                .data(instructors)
-                .build()
-        );
+                ApiResponse.<List<UserDTO>>builder()
+                        .success(true)
+                        .message("Lấy danh sách giảng viên thành công")
+                        .data(instructors)
+                        .build());
     }
 
     @GetMapping("/me")
@@ -59,12 +55,11 @@ public class UserController {
     public ResponseEntity<ApiResponse<UserDTO>> getMe() {
         UserDTO user = userService.getMe();
         return ResponseEntity.ok(
-            ApiResponse.<UserDTO>builder()
-                .success(true)
-                .message("Lấy thông tin người dùng thành công")
-                .data(user)
-                .build()
-        );
+                ApiResponse.<UserDTO>builder()
+                        .success(true)
+                        .message("Lấy thông tin người dùng thành công")
+                        .data(user)
+                        .build());
     }
 
     @PutMapping
@@ -87,6 +82,11 @@ public class UserController {
         }
 
         UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
+        userService.changePassword(principal.getId(), request);
+
+        return ResponseEntity.ok(
+                Map.of("message", "Password changed successfully"));
+    }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
@@ -94,16 +94,11 @@ public class UserController {
     public ResponseEntity<ApiResponse<UserDTO>> updateUser(@PathVariable Long id, @RequestBody UserDTO userDTO) {
         UserDTO updatedUser = userService.updateUser(id, userDTO);
         return ResponseEntity.ok(
-            ApiResponse.<UserDTO>builder()
-                .success(true)
-                .message("Cập nhật thông tin người dùng thành công")
-                .data(updatedUser)
-                .build()
-        );
-    }
-
-        return ResponseEntity.ok(
-                Map.of("message", "Password changed successfully"));
+                ApiResponse.<UserDTO>builder()
+                        .success(true)
+                        .message("Cập nhật thông tin người dùng thành công")
+                        .data(updatedUser)
+                        .build());
     }
 }
 // import org.springframework.data.domain.Page;
