@@ -34,10 +34,11 @@ public class JwtUtils {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public String generateTokenFromUsername(String username, Long userId) {
+    public String generateTokenFromUsername(String username, Long userId, String role) {
         return Jwts.builder()
                 .subject(userId.toString())  // sub = userId (chuẩn JWT)
                 .claim("username", username)
+                .claim("role", role)          // role: ADMIN, STUDENT, INSTRUCTOR
                 .issuedAt(new Date())
                 .expiration(new Date((new Date()).getTime() + jwtExpirationMs))
                 .signWith(getSigningKey())
@@ -61,6 +62,15 @@ public class JwtUtils {
                 .parseSignedClaims(token)
                 .getPayload()
                 .get("username", String.class);
+    }
+
+    public String getRoleFromJwtToken(String token) {
+        return Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .get("role", String.class);
     }
 
     public boolean validateJwtToken(String authToken) {
