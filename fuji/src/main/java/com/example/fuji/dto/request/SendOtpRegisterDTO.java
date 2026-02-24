@@ -13,6 +13,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class SendOtpRegisterDTO {
 
+    @NotBlank(message = "Username không được để trống")
+    @Size(min = 3, max = 20, message = "Username phải từ 3 đến 20 ký tự")
     @NotBlank(message = "Tên đăng nhập không được để trống")
     @Size(min = 3, max = 30, message = "Tên đăng nhập phải từ 3 đến 30 ký tự")
     private String username;

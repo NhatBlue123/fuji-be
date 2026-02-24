@@ -18,6 +18,7 @@ public class UserDTO {
     private String fullName;
     private String avatarUrl;
     private String role;
+    private Boolean isActive;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

@@ -23,9 +23,16 @@ import com.example.fuji.service.AuthService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
+//import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.CookieValue;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 
 @RestController
 @RequestMapping("/api/auth")
@@ -39,10 +46,9 @@ public class AuthController {
 
     @PostMapping("/send-otp-register")
     @Operation(summary = "Validate thông tin + Gửi OTP để đăng ký - KHÔNG tạo tài khoản")
-    public ResponseEntity<ApiResponse<String>> sendOtpForRegistration(
-            @Valid @RequestBody SendOtpRegisterDTO request) {
-        authService.sendOtpForRegistration(request);
-        return ResponseEntity.ok(ApiResponse.success("OTP đã được gửi đến email " + request.getEmail()));
+    public ResponseEntity<ApiResponse<String>> sendOtpRegister(@Valid @RequestBody SendOtpRegisterDTO request) {
+        String message = authService.sendOtpRegister(request);
+        return ResponseEntity.ok(ApiResponse.success(message));
     }
 
     @PostMapping("/register")
@@ -70,7 +76,7 @@ public class AuthController {
         // Set refreshToken vào HttpOnly cookie (bảo mật cao) with SameSite
         addRefreshTokenCookie(response, authResponse.getRefreshToken());
 
-        // ✅ Access token trả về trong JSON body (client tự quản lý)
+        // Access token trả về trong JSON body (client tự quản lý)
         LoginResponse loginResponse = new LoginResponse(
                 authResponse.getAccessToken(),
                 authResponse.getUsername());
@@ -95,7 +101,7 @@ public class AuthController {
         // ✅ Rotate refresh token (set cookie mới) with SameSite
         addRefreshTokenCookie(response, authResponse.getRefreshToken());
 
-        // ✅ Chỉ trả về access token mới trong JSON
+        // Chỉ trả về access token mới trong JSON
         RefreshResponse refreshResponse = new RefreshResponse(authResponse.getAccessToken());
 
         return ResponseEntity.ok(ApiResponse.success("Làm mới token thành công", refreshResponse));

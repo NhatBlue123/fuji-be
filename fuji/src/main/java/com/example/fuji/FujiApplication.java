@@ -13,6 +13,7 @@ public class FujiApplication {
 	public static void main(String[] args) {
 		loadEnvFile();
 		SpringApplication.run(FujiApplication.class, args);
+		
 	}
 
 	private static void loadEnvFile() {
