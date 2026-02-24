@@ -16,6 +16,7 @@ import com.example.fuji.entity.enums.AttemptStatus;
 import com.example.fuji.entity.JlptQuestion;
 import com.example.fuji.entity.JlptTest;
 import com.example.fuji.entity.JlptTestAttempt;
+import com.example.fuji.entity.User;
 import com.example.fuji.exception.AlreadySubmittedException;
 import com.example.fuji.exception.BadRequestException;
 import com.example.fuji.exception.ResourceNotFoundException;
