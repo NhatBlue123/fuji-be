@@ -88,7 +88,8 @@ public class GlobalExceptionHandler {
         ErrorResponse response = new ErrorResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 "Internal Server Error",
-                "Đã xảy ra lỗi hệ thống");
+                "Lỗi hệ thống: " + ex.getClass().getSimpleName() + " - " + ex.getMessage()
+        );
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
 
