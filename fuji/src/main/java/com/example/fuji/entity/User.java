@@ -24,9 +24,12 @@ import com.example.fuji.enums.JlptLevel;
 @NoArgsConstructor
 @AllArgsConstructor
 public class User {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    // ===== Basic Info =====
 
     @Column(nullable = false, unique = true, length = 50)
     private String username;
@@ -43,26 +46,33 @@ public class User {
     @Column(name = "full_name", nullable = false, length = 100)
     private String fullName;
 
-    @Column(name = "avatar_url", length = 500)
-    private String avatarUrl = "https://png.pngtree.com/png-vector/20190623/ourlarge/pngtree-accountavataruser--flat-color-icon--vector-icon-banner-templ-png-image_1491720.jpg";
+    // ===== Profile =====
 
     @Column(columnDefinition = "TEXT")
     private String bio;
-
-    @Enumerated(EnumType.STRING)
-    @Column(length = 20)
-    private Gender gender = Gender.other;
 
     @Column(length = 20)
     private String phone;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private Role role = Role.STUDENT;
+    @Column(length = 20)
+    private Gender gender = Gender.other;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 10)
     private JlptLevel jlptLevel = JlptLevel.N5;
+
+    @Column(name = "avatar_url", length = 500)
+    private String avatarUrl =
+            "https://png.pngtree.com/png-vector/20190623/ourlarge/pngtree-accountavataruser--flat-color-icon--vector-icon-banner-templ-png-image_1491720.jpg";
+
+    // ===== Role =====
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private Role role = Role.STUDENT;
+
+    // ===== Status =====
 
     @Column(name = "is_active")
     private Boolean isActive = true;
@@ -79,11 +89,15 @@ public class User {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
+    // ===== Audit =====
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    // ===== Lifecycle =====
 
     @PrePersist
     protected void onCreate() {
