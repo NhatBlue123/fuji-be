@@ -6,14 +6,28 @@ import java.time.LocalDateTime;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import jakarta.persistence.*;
+import com.example.fuji.entity.enums.JLPTLevel;
+import com.example.fuji.entity.enums.TestType;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
-import com.example.fuji.enums.JlptLevel;
-import com.example.fuji.enums.JlptTestType;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "jlpt_tests")
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class JlptTest {
 
     @Id
@@ -25,31 +39,50 @@ public class JlptTest {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 10)
-    private JlptLevel level;
+    private JLPTLevel level;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "test_type", nullable = false, length = 20)
-    private JlptTestType testType;
+    private TestType testType;
 
     @Column(columnDefinition = "TEXT")
     private String description;
 
     @Column(nullable = false)
-    private Integer duration;
+    private Integer duration; // in minutes
 
     @Column(name = "total_questions", nullable = false)
     private Integer totalQuestions;
 
-    @Column(name = "passing_score", precision = 5, scale = 2, nullable = false)
-    private BigDecimal passingScore;
+    @Column(name = "max_score")
+    @Builder.Default
+    private Integer maxScore = 180;
+
+    @Column(name = "pass_score", nullable = false)
+    private Integer passScore;
+
+    @Column(name = "language_knowledge_pass_score")
+    @Builder.Default
+    private Integer languageKnowledgePassScore = 19;
+
+    @Column(name = "reading_pass_score")
+    @Builder.Default
+    private Integer readingPassScore = 19;
+
+    @Column(name = "listening_pass_score")
+    @Builder.Default
+    private Integer listeningPassScore = 19;
 
     @Column(name = "attempt_count")
+    @Builder.Default
     private Integer attemptCount = 0;
 
     @Column(name = "average_score", precision = 5, scale = 2)
+    @Builder.Default
     private BigDecimal averageScore = BigDecimal.ZERO;
 
     @Column(name = "is_published")
+    @Builder.Default
     private Boolean isPublished = false;
 
     @CreationTimestamp

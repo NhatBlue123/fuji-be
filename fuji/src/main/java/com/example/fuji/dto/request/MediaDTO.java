@@ -5,7 +5,8 @@ import lombok.Data;
 
 @Data
 @Builder
-public class MediaDTO { //Kiểu dữ liệu trả về sau khi tải lên
+public class MediaDTO { // Kiểu dữ liệu trả về sau khi tải lên
+    private Long id; // Added to support DB ID
     private String url;
     private String publicId;
     private String resourceType;

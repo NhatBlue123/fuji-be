@@ -4,18 +4,25 @@ import java.time.LocalDateTime;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+
 import com.example.fuji.enums.Role;
 import com.example.fuji.enums.Gender;
 import com.example.fuji.enums.JlptLevel;
 
 @Entity
 @Table(name = "users", indexes = {
-    @Index(name = "idx_email", columnList = "email", unique = true),
-    @Index(name = "idx_username", columnList = "username", unique = true),
-    @Index(name = "idx_is_active", columnList = "is_active"),
-    @Index(name = "idx_role", columnList = "role")
+        @Index(name = "idx_email", columnList = "email", unique = true),
+        @Index(name = "idx_username", columnList = "username", unique = true),
+        @Index(name = "idx_is_active", columnList = "is_active"),
+        @Index(name = "idx_role", columnList = "role")
 })
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
