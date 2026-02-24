@@ -37,8 +37,8 @@ public class CourseService {
     @Transactional(readOnly = true)
     public Page<CourseResponseDTO> getAllCourses(int page, int size, String sortBy, String sortDir) {
         Sort sort = sortDir.equalsIgnoreCase("asc")
-            ? Sort.by(sortBy).ascending()
-            : Sort.by(sortBy).descending();
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
 
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<Course> courses = courseRepository.findAll(pageable);
@@ -49,8 +49,8 @@ public class CourseService {
     @Transactional(readOnly = true)
     public Page<CourseResponseDTO> getPublishedCourses(int page, int size, String sortBy, String sortDir) {
         Sort sort = sortDir.equalsIgnoreCase("asc")
-            ? Sort.by(sortBy).ascending()
-            : Sort.by(sortBy).descending();
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
 
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<Course> courses = courseRepository.findByIsPublishedTrue(pageable);
@@ -89,7 +89,7 @@ public class CourseService {
         // Validate instructor exists
         User instructor = userRepository.findById(courseDTO.getInstructorId())
                 .orElseThrow(() -> new ResourceNotFoundException(
-                    "Giảng viên không tồn tại với id: " + courseDTO.getInstructorId()));
+                        "Giảng viên không tồn tại với id: " + courseDTO.getInstructorId()));
 
         // Upload thumbnail if provided
         String thumbnailUrl = null;
@@ -124,7 +124,6 @@ public class CourseService {
         return convertToDTO(savedCourse);
     }
 
-
     @Transactional
     public CourseResponseDTO updateCourse(Long id, CourseUpdateDTO updates, MultipartFile thumbnail) {
         Course course = courseRepository.findById(id)
@@ -145,7 +144,8 @@ public class CourseService {
         }
         if (updates.getInstructorId() != null) {
             User newInstructor = userRepository.findById(updates.getInstructorId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Giảng viên không tồn tại với id: " + updates.getInstructorId()));
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Giảng viên không tồn tại với id: " + updates.getInstructorId()));
             course.setInstructor(newInstructor);
         }
 

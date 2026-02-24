@@ -12,9 +12,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "flash_list_ratings", uniqueConstraints = {
-    @UniqueConstraint(name = "uk_flash_rating_user_list", columnNames = {"user_id", "list_id"})
-})
+@Table(name = "flash_list_ratings")
 @Data
 @Builder
 @NoArgsConstructor
@@ -26,29 +24,18 @@ public class FlashListRating {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(
-        name = "user_id",
-        nullable = false,
-        foreignKey = @ForeignKey(
-            name = "fk_flash_ratings_user",
-            foreignKeyDefinition = "FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE"
-        )
-    )
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(
-        name = "list_id",
-        nullable = false,
-        foreignKey = @ForeignKey(
-            name = "fk_flash_ratings_list",
-            foreignKeyDefinition = "FOREIGN KEY (list_id) REFERENCES flash_lists(id) ON DELETE CASCADE"
-        )
-    )
+    @JoinColumn(name = "list_id", nullable = false)
     private FlashList list;
 
     @Column(nullable = false)
     private Integer rating;
+
+    @Column(columnDefinition = "TEXT")
+    private String content;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

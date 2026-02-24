@@ -1,24 +1,29 @@
 package com.example.fuji.entity;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "courses", indexes = {
-    @Index(name = "idx_instructor_id", columnList = "instructor_id"),
-    @Index(name = "idx_created_by", columnList = "created_by"),
-    @Index(name = "idx_is_published", columnList = "is_published"),
-    @Index(name = "idx_created_at", columnList = "created_at"),
-    @Index(name = "idx_instructor_published", columnList = "instructor_id, is_published"),
-    @Index(name = "idx_published_rating", columnList = "is_published, average_rating")
-})
+@Table(name = "courses")
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Course {
 
     @Id
@@ -28,63 +33,58 @@ public class Course {
     @Column(nullable = false, length = 200)
     private String title;
 
-    @Column(columnDefinition = "TEXT NOT NULL")
-    private String description = "";
+    @Column(columnDefinition = "TEXT")
+    private String description;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(
-        name = "instructor_id",
-        nullable = false,
-        foreignKey = @ForeignKey(
-            name = "fk_courses_instructor",
-            foreignKeyDefinition = "FOREIGN KEY (instructor_id) REFERENCES users(id) ON DELETE RESTRICT"
-        )
-    )
+    @ManyToOne
+    @JoinColumn(name = "instructor_id", nullable = false)
     private User instructor;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(
-        name = "created_by",
-        nullable = false,
-        foreignKey = @ForeignKey(
-            name = "fk_courses_created_by",
-            foreignKeyDefinition = "FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE RESTRICT"
-        )
-    )
+    @ManyToOne
+    @JoinColumn(name = "created_by", nullable = false)
     private User createdBy;
 
     @Column(name = "thumbnail_url", length = 500)
-    private String thumbnailUrl;
+    @Builder.Default
+    private String thumbnailUrl = "https://i.postimg.cc/LXt5Hbnf/image.png";
 
-    @Column(precision = 10, scale = 2, nullable = false)
+    @Column(precision = 10, scale = 2)
+    @Builder.Default
     private BigDecimal price = BigDecimal.ZERO;
 
-    @Column(name = "student_count", columnDefinition = "INT UNSIGNED DEFAULT 0")
+    @Column(length = 3)
+    @Builder.Default
+    private String currency = "VND";
+
+    @Column(name = "student_count")
+    @Builder.Default
     private Integer studentCount = 0;
 
-    @Column(name = "lesson_count", columnDefinition = "INT UNSIGNED DEFAULT 0")
+    @Column(name = "lesson_count")
+    @Builder.Default
     private Integer lessonCount = 0;
 
-    @Column(name = "total_duration", columnDefinition = "INT UNSIGNED DEFAULT 0")
+    @Column(name = "total_duration")
+    @Builder.Default
     private Integer totalDuration = 0;
 
     @Column(name = "average_rating", precision = 3, scale = 2)
+    @Builder.Default
     private BigDecimal averageRating = BigDecimal.ZERO;
 
-    @Column(name = "rating_count", columnDefinition = "INT UNSIGNED DEFAULT 0")
+    @Column(name = "rating_count")
+    @Builder.Default
     private Integer ratingCount = 0;
 
-    @Column(name = "is_published", nullable = false)
+    @Column(name = "is_published")
+    @Builder.Default
     private Boolean isPublished = false;
 
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
-
     @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    @Column(name = "created_at", updatable = false)
+    private java.time.LocalDateTime createdAt;
 
     @UpdateTimestamp
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
+    @Column(name = "updated_at")
+    private java.time.LocalDateTime updatedAt;
 }
