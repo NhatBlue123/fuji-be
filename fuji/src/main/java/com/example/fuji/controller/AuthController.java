@@ -45,10 +45,9 @@ public class AuthController {
 
     @PostMapping("/send-otp-register")
     @Operation(summary = "Validate thông tin + Gửi OTP để đăng ký - KHÔNG tạo tài khoản")
-    public ResponseEntity<ApiResponse<String>> sendOtpForRegistration(
-            @Valid @RequestBody SendOtpRegisterDTO request) {
-        authService.sendOtpForRegistration(request);
-        return ResponseEntity.ok(ApiResponse.success("OTP đã được gửi đến email " + request.getEmail()));
+    public ResponseEntity<ApiResponse<String>> sendOtpRegister(@Valid @RequestBody SendOtpRegisterDTO request) {
+        String message = authService.sendOtpRegister(request);
+        return ResponseEntity.ok(ApiResponse.success(message));
     }
 
     @PostMapping("/register")
@@ -82,7 +81,7 @@ public class AuthController {
         refreshCookie.setMaxAge(7 * 24 * 60 * 60); // 7 ngày
         response.addCookie(refreshCookie);
 
-        // ✅ Access token trả về trong JSON body (client tự quản lý)
+        // Access token trả về trong JSON body (client tự quản lý)
         LoginResponse loginResponse = new LoginResponse(
                 authResponse.getAccessToken(),
                 authResponse.getUsername());
@@ -96,22 +95,19 @@ public class AuthController {
             @CookieValue(name = "refreshToken", required = true) String refreshToken,
             jakarta.servlet.http.HttpServletResponse response) {
 
-        // ✅ Refresh token CHỈ đọc từ HttpOnly cookie (không cho phép từ body)
+        // Refresh token CHỈ đọc từ HttpOnly cookie (không cho phép từ body)
         AuthResponse authResponse = authService.refreshAccessToken(refreshToken);
 
-        // ✅ Rotate refresh token (set cookie mới)
+        // Rotate refresh token (set cookie mới)
         jakarta.servlet.http.Cookie newRefreshCookie = new jakarta.servlet.http.Cookie("refreshToken",
                 authResponse.getRefreshToken());
         newRefreshCookie.setHttpOnly(true);
-
-        newRefreshCookie.setSecure(false);  
-
-        newRefreshCookie.setSecure(false); 
+        newRefreshCookie.setSecure(false);
         newRefreshCookie.setPath("/");
         newRefreshCookie.setMaxAge(7 * 24 * 60 * 60);
         response.addCookie(newRefreshCookie);
 
-        // ✅ Chỉ trả về access token mới trong JSON
+        // Chỉ trả về access token mới trong JSON
         RefreshResponse refreshResponse = new RefreshResponse(authResponse.getAccessToken());
 
         return ResponseEntity.ok(ApiResponse.success("Làm mới token thành công", refreshResponse));

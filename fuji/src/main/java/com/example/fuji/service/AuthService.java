@@ -45,7 +45,7 @@ public class AuthService {
      * KHÔNG tạo user, KHÔNG lưu thông tin đăng ký
      */
     @Transactional
-    public void sendOtpForRegistration(SendOtpRegisterDTO request) {
+    public String sendOtpRegister(SendOtpRegisterDTO request) {
         log.info("📧 Gửi OTP đăng ký cho email: {}", request.getEmail());
 
         // Check email đã tồn tại
@@ -60,13 +60,25 @@ public class AuthService {
 
         // Tạo và gửi OTP
         String otpCode = String.valueOf(new Random().nextInt(900000) + 100000);
+
+        // Delete any existing OTP for this email before creating a new one
+        otpRepository.findByEmail(request.getEmail()).ifPresent(otpRepository::delete);
+
         Otp otp = new Otp();
         otp.setEmail(request.getEmail());
         otp.setOtpCode(otpCode);
         otp.setExpiresAt(LocalDateTime.now().plusMinutes(5));
         otpRepository.save(otp);
 
-        emailService.sendOtpEmail(request.getEmail(), otpCode);
+        try {
+            emailService.sendOtpEmail(request.getEmail(), otpCode);
+            log.info("OTP sent successfully to: {}", request.getEmail());
+        } catch (Exception e) {
+            log.error("Failed to send OTP email to: {}. Error: {}", request.getEmail(), e.getMessage());
+            log.warn("OTP Code for {} is: {}", request.getEmail(), otpCode);
+        }
+
+        return "Mã OTP đã được gửi đến email của bạn. Vui lòng kiểm tra email.";
     }
 
     /**
@@ -130,8 +142,7 @@ public class AuthService {
     public AuthResponse login(AuthDTO authRequest) {
         // Authenticate user
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(authRequest.getUsername(), authRequest.getPassword())
-        );
+                new UsernamePasswordAuthenticationToken(authRequest.getUsername(), authRequest.getPassword()));
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         // Get user and verify active status

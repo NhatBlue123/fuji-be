@@ -33,8 +33,7 @@ public class GlobalExceptionHandler {
                 HttpStatus.BAD_REQUEST.value(),
                 "Validation Failed",
                 message,
-                errors
-        );
+                errors);
 
         return ResponseEntity.badRequest().body(response);
     }
@@ -44,8 +43,7 @@ public class GlobalExceptionHandler {
         ErrorResponse response = new ErrorResponse(
                 HttpStatus.UNAUTHORIZED.value(),
                 "Unauthorized",
-                "Tên đăng nhập hoặc mật khẩu không đúng"
-        );
+                "Tên đăng nhập hoặc mật khẩu không đúng");
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
 
@@ -54,24 +52,33 @@ public class GlobalExceptionHandler {
         ErrorResponse response = new ErrorResponse(
                 HttpStatus.FORBIDDEN.value(),
                 "Forbidden",
-                "Tài khoản chưa được kích hoạt hoặc đã bị khóa"
-        );
+                "Tài khoản chưa được kích hoạt hoặc đã bị khóa");
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
     }
 
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadable(
+            org.springframework.http.converter.HttpMessageNotReadableException ex) {
+        log.error("Malformed JSON request: {}", ex.getMessage());
+        ErrorResponse response = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                "Bad Request",
+                "Dữ liệu gửi lên không đúng định dạng (JSON parse error)");
+        return ResponseEntity.badRequest().body(response);
+    }
+
     @ExceptionHandler({
-        ResourceNotFoundException.class,
-        BadRequestException.class,
-        UnauthorizedException.class,
-        ConflictException.class
+            ResourceNotFoundException.class,
+            BadRequestException.class,
+            UnauthorizedException.class,
+            ConflictException.class
     })
     public ResponseEntity<ErrorResponse> handleCustomExceptions(RuntimeException ex) {
         HttpStatus status = getHttpStatus(ex);
         ErrorResponse response = new ErrorResponse(
                 status.value(),
                 status.getReasonPhrase(),
-                ex.getMessage()
-        );
+                ex.getMessage());
         return ResponseEntity.status(status).body(response);
     }
 
@@ -81,17 +88,19 @@ public class GlobalExceptionHandler {
         ErrorResponse response = new ErrorResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 "Internal Server Error",
-                "Đã xảy ra lỗi hệ thống"
-        );
+                "Đã xảy ra lỗi hệ thống");
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
 
     private HttpStatus getHttpStatus(RuntimeException ex) {
-        if (ex instanceof ResourceNotFoundException) return HttpStatus.NOT_FOUND;
-        if (ex instanceof BadRequestException) return HttpStatus.BAD_REQUEST;
-        if (ex instanceof UnauthorizedException) return HttpStatus.UNAUTHORIZED;
-        if (ex instanceof ConflictException) return HttpStatus.CONFLICT;
+        if (ex instanceof ResourceNotFoundException)
+            return HttpStatus.NOT_FOUND;
+        if (ex instanceof BadRequestException)
+            return HttpStatus.BAD_REQUEST;
+        if (ex instanceof UnauthorizedException)
+            return HttpStatus.UNAUTHORIZED;
+        if (ex instanceof ConflictException)
+            return HttpStatus.CONFLICT;
         return HttpStatus.INTERNAL_SERVER_ERROR;
     }
 }
-

@@ -4,6 +4,9 @@ import java.time.LocalDateTime;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 
 import com.example.fuji.enums.Role;
 import com.example.fuji.enums.Gender;
@@ -17,6 +20,9 @@ import com.example.fuji.enums.JlptLevel;
         @Index(name = "idx_role", columnList = "role")
 })
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class User {
 
     @Id

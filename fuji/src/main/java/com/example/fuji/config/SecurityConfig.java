@@ -42,33 +42,33 @@ public class SecurityConfig {
 
         return http
                 .csrf(csrf -> csrf.disable())
-
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-
-                .sessionManagement(sess ->
-                        sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
-
                 .authorizeHttpRequests(auth -> auth
-                        // Cho phép preflight request
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
-                        // Public APIs
-                        .requestMatchers(
-                                "/api/auth/login",
-                                "/api/auth/register",
-                                "/api/auth/refresh",
-                                "/swagger-ui/**",
-                                "/v3/api-docs/**",
-                                "/actuator/**"
-                        ).permitAll()
-
-                        // Protected APIs
-                        .anyRequest().authenticated()
-                )
-
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/media/**").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers("/actuator/**").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+                        .anyRequest().authenticated())
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .formLogin(form -> form.disable())
+                .httpBasic(basic -> basic.disable())
+                .exceptionHandling(ex -> ex
+                        .accessDeniedHandler((request, response, ex1) -> {
+                            response.setStatus(403);
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.getWriter().write(
+                                    "{\"timestamp\":\"" + java.time.LocalDateTime.now() +
+                                            "\",\"status\":403,\"error\":\"Forbidden\",\"message\":\"Bạn không có quyền truy cập\"}");
+                        })
+                        .authenticationEntryPoint((request, response, ex1) -> {
+                            response.setStatus(401);
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.getWriter().write(
+                                    "{\"timestamp\":\"" + java.time.LocalDateTime.now() +
+                                            "\",\"status\":401,\"error\":\"Unauthorized\",\"message\":\"Bạn cần đăng nhập\"}");
+                        }))
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-
                 .build();
     }
 
@@ -82,17 +82,15 @@ public class SecurityConfig {
     // ===== CORS Config =====
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration config = new CorsConfiguration();
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(List.of("http://localhost:3000"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
 
-        config.setAllowCredentials(true);
-        config.setAllowedOrigins(List.of("http://localhost:3000"));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("*"));
+        configuration.setAllowCredentials(true);
 
-        UrlBasedCorsConfigurationSource source =
-                new UrlBasedCorsConfigurationSource();
-
-        source.registerCorsConfiguration("/**", config);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
         return source;
     }
 }

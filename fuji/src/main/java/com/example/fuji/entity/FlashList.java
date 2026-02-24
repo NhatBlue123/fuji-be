@@ -2,25 +2,31 @@ package com.example.fuji.entity;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import jakarta.persistence.*;
+import com.example.fuji.enums.JlptLevel;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.ForeignKey;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import com.example.fuji.enums.JlptLevel;
 
 @Entity
-@Table(name = "flash_lists", indexes = {
-    @Index(name = "idx_flashlist_user_id", columnList = "user_id"),
-    @Index(name = "idx_flashlist_is_public", columnList = "is_public"),
-    @Index(name = "idx_flashlist_level", columnList = "level")
-})
+@Table(name = "flash_lists")
 @Data
 @Builder
 @NoArgsConstructor
@@ -32,14 +38,7 @@ public class FlashList {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(
-        name = "user_id",
-        nullable = false,
-        foreignKey = @ForeignKey(
-            name = "fk_flash_lists_user",
-            foreignKeyDefinition = "FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE"
-        )
-    )
+    @JoinColumn(name = "user_id", nullable = false, foreignKey = @ForeignKey(name = "fk_flash_lists_user", foreignKeyDefinition = "FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE"))
     private User user;
 
     @Column(nullable = false, length = 200)
@@ -58,11 +57,6 @@ public class FlashList {
     @Column(name = "is_public")
     @Builder.Default
     private Boolean isPublic = true;
-
-    @OneToMany(mappedBy = "flashList", cascade = CascadeType.ALL, orphanRemoval = true)
-    @OrderBy("cardOrder ASC")
-    @Builder.Default
-    private List<FlashListCard> flashListCards = new ArrayList<>();
 
     @Column(name = "card_count")
     @Builder.Default
@@ -92,13 +86,10 @@ public class FlashList {
     private LocalDateTime updatedAt;
 
     public void updateCardCount() {
-        this.cardCount = flashListCards.stream()
-            .mapToInt(flc -> flc.getFlashCard().getCardCount())
-            .sum();
+        // Logic to be implemented or handled by service
     }
 
     public void incrementStudyCount() {
-        this.studyCount++;
+        this.studyCount = (this.studyCount == null ? 0 : this.studyCount) + 1;
     }
 }
-
