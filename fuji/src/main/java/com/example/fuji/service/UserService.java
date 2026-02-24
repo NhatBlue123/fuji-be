@@ -3,6 +3,7 @@ package com.example.fuji.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import java.util.List;
 import java.util.stream.Collectors;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -159,7 +160,7 @@ public class UserService {
     @Transactional
     public UserDTO updateUser(Long id, UserDTO userDTO) {
         User user = userRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Người dùng không tồn tại với id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Người dùng không tồn tại với id: " + id));
 
         // Track if role is changing
         boolean roleChanging = false;
@@ -179,7 +180,8 @@ public class UserService {
         // Save updated user
         User updatedUser = userRepository.save(user);
 
-        // If role changed, revoke all refresh tokens so user must re-authenticate with new permissions
+        // If role changed, revoke all refresh tokens so user must re-authenticate with
+        // new permissions
         if (roleChanging) {
             refreshTokenService.revokeAllUserTokens(user.getId());
         }
