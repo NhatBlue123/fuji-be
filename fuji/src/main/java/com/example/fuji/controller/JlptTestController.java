@@ -14,9 +14,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.fuji.dto.request.CreateJlptTestDTO;
 import com.example.fuji.dto.request.CreateQuestionDTO;
-import com.example.fuji.dto.request.SubmitTestAttemptDTO;
 import com.example.fuji.dto.request.UpdateJlptTestDTO;
 import com.example.fuji.dto.request.UpdateQuestionDTO;
+import com.example.fuji.dto.request.StartTestAttemptDTO;
 import com.example.fuji.dto.response.ApiResponse;
 import com.example.fuji.dto.response.JlptTestResponseDTO;
 import com.example.fuji.dto.response.QuestionResponseDTO;
@@ -33,10 +33,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
-/**
- * Controller quản lý đề thi JLPT
- * (Redesigned with Parent-Child Structure)
- */
 @RestController
 @RequestMapping("/api/jlpt-tests")
 @RequiredArgsConstructor
@@ -47,10 +43,6 @@ public class JlptTestController {
     private final JlptTestService testService;
     private final JlptTestAttemptService attemptService;
     private final AuthUtils authUtils;
-
-    // ========================================================================
-    // QUẢN LÝ ĐỀ THI (ADMIN)
-    // ========================================================================
 
     @PostMapping
     @Operation(summary = "Tạo đề thi mới")
@@ -89,10 +81,6 @@ public class JlptTestController {
         testService.deleteTest(id);
         return ResponseEntity.ok(ApiResponse.success("Xóa đề thi thành công"));
     }
-
-    // ========================================================================
-    // QUẢN LÝ CÂU HỎI (ADMIN)
-    // ========================================================================
 
     @PostMapping("/{testId}/questions")
     @Operation(summary = "Thêm câu hỏi vào đề thi (Parent hoặc Single Question)")
@@ -146,12 +134,13 @@ public class JlptTestController {
                         testService.getPublishedTestsByLevel(level, search, page, size)));
     }
 
-    @PostMapping("/submit")
-    @Operation(summary = "Nộp bài thi")
-    public ResponseEntity<ApiResponse<TestAttemptResponseDTO>> submitTest(
-            @Valid @RequestBody SubmitTestAttemptDTO dto) {
+    @PostMapping("/start")
+    @Operation(summary = "Bắt đầu làm bài thi (Tạo Attempt IN_PROGRESS)")
+    public ResponseEntity<ApiResponse<TestAttemptResponseDTO>> startTest(
+            @Valid @RequestBody StartTestAttemptDTO dto) {
         User currentUser = authUtils.getCurrentUser();
         return ResponseEntity
-                .ok(ApiResponse.success("Nộp bài thành công", attemptService.submitAttempt(currentUser.getId(), dto)));
+                .ok(ApiResponse.success("Bắt đầu làm bài thi",
+                        attemptService.startAttempt(currentUser.getId(), dto.getTestId())));
     }
 }
