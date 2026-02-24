@@ -1,17 +1,21 @@
 package com.example.fuji.controller;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Set;
 
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.fuji.dto.request.CourseRequestDTO;
 import com.example.fuji.dto.request.CourseUpdateDTO;
+import com.example.fuji.dto.request.RatingRequestDTO;
 import com.example.fuji.dto.response.ApiResponse;
 import com.example.fuji.dto.response.CourseResponseDTO;
+import com.example.fuji.dto.response.RatingResponseDTO;
 import com.example.fuji.exception.BadRequestException;
 import com.example.fuji.service.CourseService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -54,7 +58,8 @@ public class CourseController {
     }
 
     @PostMapping(consumes = "multipart/form-data")
-    @Operation(summary = "Tạo khóa học mới (có thể kèm ảnh thumbnail)")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Tạo khóa học mới (Admin only, có thể kèm ảnh thumbnail)")
     public ResponseEntity<ApiResponse<CourseResponseDTO>> createCourse(
             @RequestPart("course") String courseJson,
             @RequestPart(value = "thumbnail", required = false) MultipartFile thumbnail) {
@@ -153,7 +158,8 @@ public class CourseController {
     }
 
     @PatchMapping(value = "/{id}", consumes = "multipart/form-data")
-    @Operation(summary = "Cập nhật thông tin khóa học (Partial Update)")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Cập nhật thông tin khóa học (Admin only, Partial Update)")
     public ResponseEntity<ApiResponse<CourseResponseDTO>> updateCourse(
             @PathVariable Long id,
             @RequestPart("course") String courseJson,
@@ -187,13 +193,47 @@ public class CourseController {
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Xóa khóa học")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Xóa khóa học và tất cả lessons (Admin only)")
     public ResponseEntity<ApiResponse<Void>> deleteCourse(@PathVariable Long id) {
         courseService.deleteCourse(id);
         return ResponseEntity.ok(
                 ApiResponse.<Void>builder()
                         .success(true)
-                        .message("Xóa khóa học thành công")
+                        .message("Xóa khóa học và tất cả bài học thành công")
+                        .build());
+    }
+
+    // ==================== RATING API ====================
+
+    @PostMapping("/{id}/rate")
+    @Operation(summary = "Đánh giá khóa học (1-5 sao)")
+    public ResponseEntity<ApiResponse<RatingResponseDTO>> rateCourse(
+            @PathVariable Long id,
+            @jakarta.validation.Valid @RequestBody RatingRequestDTO ratingDTO) {
+
+        RatingResponseDTO rating = courseService.rateCourse(id, ratingDTO);
+
+        return ResponseEntity.ok(
+                ApiResponse.<RatingResponseDTO>builder()
+                        .success(true)
+                        .message("Đánh giá khóa học thành công")
+                        .data(rating)
+                        .build());
+    }
+
+    @GetMapping("/{id}/ratings")
+    @Operation(summary = "Lấy danh sách đánh giá của khóa học")
+    public ResponseEntity<ApiResponse<List<RatingResponseDTO>>> getCourseRatings(
+            @PathVariable Long id) {
+
+        List<RatingResponseDTO> ratings = courseService.getCourseRatings(id);
+
+        return ResponseEntity.ok(
+                ApiResponse.<List<RatingResponseDTO>>builder()
+                        .success(true)
+                        .message("Lấy danh sách đánh giá thành công")
+                        .data(ratings)
                         .build());
     }
 }

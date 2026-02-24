@@ -1,5 +1,7 @@
 package com.example.fuji.repository;
-//course repository để truy xuất dữ liệu khóa học từ database
+
+import java.util.Optional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,13 +13,32 @@ import com.example.fuji.entity.Course;
 @Repository
 public interface CourseRepository extends JpaRepository<Course, Long> {
 
-    // Lấy tất cả khóa học đã publish với phân trang
-    Page<Course> findByIsPublishedTrue(Pageable pageable);
+    // ── Eager-fetch instructor + createdBy to avoid LazyInitializationException ──
 
-    // Lấy khóa học theo instructor với phân trang
+    @Query(value = "SELECT c FROM Course c JOIN FETCH c.instructor JOIN FETCH c.createdBy",
+           countQuery = "SELECT COUNT(c) FROM Course c")
+    Page<Course> findAllWithUsers(Pageable pageable);
+
+    @Query(value = "SELECT c FROM Course c JOIN FETCH c.instructor JOIN FETCH c.createdBy WHERE c.isPublished = true",
+           countQuery = "SELECT COUNT(c) FROM Course c WHERE c.isPublished = true")
+    Page<Course> findByIsPublishedTrueWithUsers(Pageable pageable);
+
+    @Query(value = "SELECT c FROM Course c JOIN FETCH c.instructor JOIN FETCH c.createdBy WHERE c.instructor.id = :instructorId",
+           countQuery = "SELECT COUNT(c) FROM Course c WHERE c.instructor.id = :instructorId")
+    Page<Course> findByInstructorIdWithUsers(Long instructorId, Pageable pageable);
+
+    @Query(value = "SELECT c FROM Course c JOIN FETCH c.instructor JOIN FETCH c.createdBy WHERE LOWER(c.title) LIKE LOWER(CONCAT('%', :keyword, '%')) AND c.isPublished = true",
+           countQuery = "SELECT COUNT(c) FROM Course c WHERE LOWER(c.title) LIKE LOWER(CONCAT('%', :keyword, '%')) AND c.isPublished = true")
+    Page<Course> searchByTitleWithUsers(String keyword, Pageable pageable);
+
+    @Query("SELECT c FROM Course c JOIN FETCH c.instructor JOIN FETCH c.createdBy WHERE c.id = :id")
+    Optional<Course> findByIdWithUsers(Long id);
+
+    // ── Legacy (kept for backward compatibility) ──
+
+    Page<Course> findByIsPublishedTrue(Pageable pageable);
     Page<Course> findByInstructorId(Long instructorId, Pageable pageable);
 
-    // Tìm kiếm khóa học theo tiêu đề với phân trang
     @Query("SELECT c FROM Course c WHERE LOWER(c.title) LIKE LOWER(CONCAT('%', :keyword, '%')) AND c.isPublished = true")
     Page<Course> searchByTitle(String keyword, Pageable pageable);
 }
