@@ -10,14 +10,20 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.fuji.dto.UpdateProfileRequest;
+import com.example.fuji.dto.UserProfileResponse;
+import com.example.fuji.dto.request.ChangePasswordRequest;
 import com.example.fuji.dto.response.UserDTO;
 import com.example.fuji.entity.User;
+import com.example.fuji.enums.Gender;
+import com.example.fuji.enums.JlptLevel;
 import com.example.fuji.enums.Role;
 import com.example.fuji.exception.ResourceNotFoundException;
 import com.example.fuji.repository.UserRepository;
 import com.example.fuji.utils.AuthUtils;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +31,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final AuthUtils authUtils;
     private final RefreshTokenService refreshTokenService;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional(readOnly = true)
     public Page<UserDTO> getAllUsers(int page, int size, String sortBy, String sortDir) {
@@ -116,6 +123,60 @@ public class UserService {
         userRepository.deleteById(id);
     }
 
+    // ================== PROFILE METHODS ==================
+
+    @Transactional(readOnly = true)
+    public UserProfileResponse getMyProfileById(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id " + userId));
+        return UserProfileResponse.from(user);
+    }
+
+    @Transactional
+    public UserProfileResponse updateMyProfileById(Long userId, UpdateProfileRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        user.setFullName(request.getFullName());
+        user.setBio(request.getBio());
+        user.setPhone(request.getPhone());
+        user.setGender(parseGender(request.getGender()));
+        user.setJlptLevel(parseJlptLevel(request.getJlptLevel()));
+
+        userRepository.save(user);
+        return UserProfileResponse.from(user);
+    }
+
+    public void changePassword(Long userId, ChangePasswordRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPasswordHash())) {
+            throw new RuntimeException("Current password is incorrect");
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+    }
+
+    private Gender parseGender(String gender) {
+        if (gender == null) return null;
+        try {
+            return Gender.valueOf(gender.trim().toLowerCase());
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Invalid gender value");
+        }
+    }
+
+    private JlptLevel parseJlptLevel(String level) {
+        if (level == null) return null;
+        try {
+            return JlptLevel.valueOf(level.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Invalid JLPT level");
+        }
+    }
+
     private UserDTO convertToDTO(User user) {
         return UserDTO.builder()
                 .id(user.getId())
@@ -195,13 +256,13 @@ public class UserService {
 
 //     @Transactional
 //     public UserDTO createUser(UserDTO userDTO) {
-//         
+//
 //         throw new UnsupportedOperationException("Chức năng tạo user chưa được implement");
 //     }
 
 //     @Transactional
 //     public UserDTO updateUser(Long id, UserDTO userDTO) {
-//         
+//
 //         throw new UnsupportedOperationException("Chức năng cập nhật user chưa được implement");
 //     }
 

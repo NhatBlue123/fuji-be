@@ -14,11 +14,13 @@ import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Component
-@Slf4j
 public class JwtUtils {
+
+    private static final Logger log = LoggerFactory.getLogger(JwtUtils.class);
 
     @Value("${fuji.jwt.secret}")
     private String jwtSecret;

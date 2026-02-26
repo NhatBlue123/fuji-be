@@ -53,7 +53,6 @@ yarn-error.log*
 .project
 .settings/
 
-application.properties
 **/*.json
 !postman/**/*.json
 
