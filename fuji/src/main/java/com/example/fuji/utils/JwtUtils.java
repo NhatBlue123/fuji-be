@@ -32,7 +32,9 @@ public class JwtUtils {
     // 🔥 tạo token
     public String generateTokenFromUsername(String username) {
         return Jwts.builder()
-                .subject(username)
+                .subject(userId.toString())  // sub = userId (chuẩn JWT)
+                .claim("username", username)
+                .claim("role", role)          // role: ADMIN, STUDENT, INSTRUCTOR
                 .issuedAt(new Date())
                 .expiration(new Date((new Date()).getTime() + jwtExpirationMs))
                 .signWith(getSigningKey())
@@ -46,7 +48,16 @@ public class JwtUtils {
                 .build()
                 .parseSignedClaims(token)
                 .getPayload()
-                .getSubject();
+                .get("username", String.class);
+    }
+
+    public String getRoleFromJwtToken(String token) {
+        return Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .get("role", String.class);
     }
 
     // 🔥 verify token
