@@ -29,9 +29,8 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // ===== Basic Info =====
-
-    @Column(nullable = false, unique = true, length = 50)
+     // USERNAME có thể null nếu login bằng Google (Google user không cần username)
+    @Column(unique = true)
     private String username;
 
     @Column(nullable = false, unique = true, length = 100)
@@ -46,48 +45,16 @@ public class User {
     @Column(name = "full_name", nullable = false, length = 100)
     private String fullName;
 
-    // ===== Profile =====
+    //google OAuth (Mỗi user Google có ID riêng → tránh trùng email)
+    @Column(name = "google_id", unique = true)
+    private String googleId;
 
-    @Column(columnDefinition = "TEXT")
-    private String bio;
-
-    @Column(length = 20)
-    private String phone;
-
-    @Enumerated(EnumType.STRING)
-    @Column(length = 20)
-    private Gender gender = Gender.other;
-
-    @Enumerated(EnumType.STRING)
-    @Column(length = 10)
-    private JlptLevel jlptLevel = JlptLevel.N5;
-
-    @Column(name = "avatar_url", length = 500)
-    private String avatarUrl =
-            "https://png.pngtree.com/png-vector/20190623/ourlarge/pngtree-accountavataruser--flat-color-icon--vector-icon-banner-templ-png-image_1491720.jpg";
-
-    // ===== Role =====
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private Role role = Role.STUDENT;
-
-    // ===== Status =====
-
+    //theo dõi trạng thái account (OAuth user không cần kích hoạt email)
     @Column(name = "is_active")
     private Boolean isActive = true;
 
-    @Column(name = "is_admin")
-    private Boolean isAdmin = false;
-
-    @Column(name = "is_online")
-    private Boolean isOnline = false;
-
-    @Column(name = "last_active_at")
-    private LocalDateTime lastActiveAt;
-
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
+    //theo dõi login (Lưu lần đăng nhập cuối cùng)
+    private LocalDateTime lastLogin;
 
     // ===== Audit =====
 
@@ -102,11 +69,7 @@ public class User {
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-    }
+        if (isActive == null) isActive = true;
 
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
     }
 }

@@ -11,7 +11,6 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
-import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
 import lombok.extern.slf4j.Slf4j;
@@ -27,14 +26,11 @@ public class JwtUtils {
     private long jwtExpirationMs;
 
     private SecretKey getSigningKey() {
-        if (jwtSecret == null || jwtSecret.isEmpty()) {
-            throw new IllegalStateException("JWT secret key is not configured");
-        }
-        byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
-        return Keys.hmacShaKeyFor(keyBytes);
+        return Keys.hmacShaKeyFor(jwtSecret.getBytes());
     }
 
-    public String generateTokenFromUsername(String username, Long userId, String role) {
+    // 🔥 tạo token
+    public String generateTokenFromUsername(String username) {
         return Jwts.builder()
                 .subject(userId.toString())  // sub = userId (chuẩn JWT)
                 .claim("username", username)
@@ -45,16 +41,7 @@ public class JwtUtils {
                 .compact();
     }
 
-    public Long getUserIdFromJwtToken(String token) {
-        String subject = Jwts.parser()
-                .verifyWith(getSigningKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload()
-                .getSubject();
-        return Long.parseLong(subject);
-    }
-
+    // 🔥 lấy username
     public String getUserNameFromJwtToken(String token) {
         return Jwts.parser()
                 .verifyWith(getSigningKey())
@@ -73,12 +60,13 @@ public class JwtUtils {
                 .get("role", String.class);
     }
 
+    // 🔥 verify token
     public boolean validateJwtToken(String authToken) {
         try {
             Jwts.parser()
-                .verifyWith(getSigningKey())
-                .build()
-                .parseSignedClaims(authToken);
+                    .verifyWith(getSigningKey())
+                    .build()
+                    .parseSignedClaims(authToken);
             return true;
         } catch (MalformedJwtException e) {
             log.error("Invalid JWT token: {}", e.getMessage());
