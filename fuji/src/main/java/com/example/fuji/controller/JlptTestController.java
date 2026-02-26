@@ -17,6 +17,7 @@ import com.example.fuji.dto.request.CreateQuestionDTO;
 import com.example.fuji.dto.request.UpdateJlptTestDTO;
 import com.example.fuji.dto.request.UpdateQuestionDTO;
 import com.example.fuji.dto.request.StartTestAttemptDTO;
+import com.example.fuji.dto.request.SubmitTestAttemptDTO;
 import com.example.fuji.dto.response.ApiResponse;
 import com.example.fuji.dto.response.JlptTestResponseDTO;
 import com.example.fuji.dto.response.QuestionResponseDTO;
@@ -142,5 +143,15 @@ public class JlptTestController {
         return ResponseEntity
                 .ok(ApiResponse.success("Bắt đầu làm bài thi",
                         attemptService.startAttempt(currentUser.getId(), dto.getTestId())));
+    }
+
+    @PostMapping("/submit")
+    @Operation(summary = "Nộp bài thi (Tạo attempt + chấm điểm trong 1 bước)")
+    public ResponseEntity<ApiResponse<TestAttemptResponseDTO>> submitTest(
+            @Valid @RequestBody SubmitTestAttemptDTO dto) {
+        User currentUser = authUtils.getCurrentUser();
+        return ResponseEntity
+                .ok(ApiResponse.success("Nộp bài thành công",
+                        attemptService.startAndSubmitAttempt(currentUser.getId(), dto)));
     }
 }

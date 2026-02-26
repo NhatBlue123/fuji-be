@@ -248,6 +248,27 @@ public class JlptTestAttemptService {
         }
     }
 
+    /**
+     * Convenience method: start (or resume) an attempt and immediately submit it.
+     * Used by the frontend one-step POST /api/jlpt-tests/submit flow.
+     * 
+     * We flush after startAttempt so the new attempt row is visible to
+     * submitAttempt's findByIdWithLock query within the same transaction.
+     */
+    @Transactional
+    public TestAttemptResponseDTO startAndSubmitAttempt(Long userId, SubmitTestAttemptDTO dto) {
+        // 1. Start (or resume) attempt — this saves the row to the DB within the
+        // transaction
+        TestAttemptResponseDTO started = startAttempt(userId, dto.getTestId());
+        Long attemptId = started.getId();
+
+        // 2. Flush so the pessimistic lock query in submitAttempt can see the new row
+        attemptRepository.flush();
+
+        // 3. Submit
+        return submitAttempt(userId, attemptId, dto);
+    }
+
     public TestAttemptResponseDTO getAttemptById(Long id) {
         JlptTestAttempt attempt = attemptRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Test attempt not found with ID: " + id));
