@@ -2,10 +2,12 @@ package com.example.fuji.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.fuji.dto.request.SubmitTestAttemptDTO;
 import com.example.fuji.dto.response.ApiResponse;
 import com.example.fuji.dto.response.TestAttemptResponseDTO;
 import com.example.fuji.service.JlptTestAttemptService;
@@ -36,6 +38,17 @@ public class JlptTestAttemptController {
     @Operation(summary = "Lấy chi tiết kết quả thi")
     public ResponseEntity<ApiResponse<TestAttemptResponseDTO>> getAttemptById(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.success("Chi tiết kết quả thi", attemptService.getAttemptById(id)));
+    }
+
+    @PostMapping("/{attemptId}/submit")
+    @Operation(summary = "Nộp bài thi cho một Attempt cụ thể")
+    public ResponseEntity<ApiResponse<TestAttemptResponseDTO>> submitTest(
+            @PathVariable Long attemptId,
+            @jakarta.validation.Valid @org.springframework.web.bind.annotation.RequestBody SubmitTestAttemptDTO dto) {
+        User currentUser = authUtils.getCurrentUser();
+        return ResponseEntity
+                .ok(ApiResponse.success("Nộp bài thành công",
+                        attemptService.submitAttempt(currentUser.getId(), attemptId, dto)));
     }
 
     @GetMapping("/my-attempts")

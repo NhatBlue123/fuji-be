@@ -64,9 +64,10 @@ public class MediaController {
 
     @DeleteMapping("/{publicId}")
     public ResponseEntity<ApiResponse<Void>> deleteMedia(
-            @PathVariable String publicId) {
+            @PathVariable String publicId,
+            @RequestParam(value = "resourceType", defaultValue = "image") String resourceType) {
         try {
-            mediaService.deleteMedia(publicId);
+            mediaService.deleteMedia(publicId, resourceType);
             return ResponseEntity.ok(ApiResponse.success("Xóa media thành công"));
         } catch (Exception e) {
             log.error("Xóa media thất bại", e);

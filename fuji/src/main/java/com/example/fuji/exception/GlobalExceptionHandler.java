@@ -71,7 +71,8 @@ public class GlobalExceptionHandler {
             ResourceNotFoundException.class,
             BadRequestException.class,
             UnauthorizedException.class,
-            ConflictException.class
+            ConflictException.class,
+            AlreadySubmittedException.class
     })
     public ResponseEntity<ErrorResponse> handleCustomExceptions(RuntimeException ex) {
         HttpStatus status = getHttpStatus(ex);
@@ -88,8 +89,7 @@ public class GlobalExceptionHandler {
         ErrorResponse response = new ErrorResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 "Internal Server Error",
-                "Lỗi hệ thống: " + ex.getClass().getSimpleName() + " - " + ex.getMessage()
-        );
+                "Lỗi hệ thống: " + ex.getClass().getSimpleName() + " - " + ex.getMessage());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
 
@@ -100,7 +100,7 @@ public class GlobalExceptionHandler {
             return HttpStatus.BAD_REQUEST;
         if (ex instanceof UnauthorizedException)
             return HttpStatus.UNAUTHORIZED;
-        if (ex instanceof ConflictException)
+        if (ex instanceof ConflictException || ex instanceof AlreadySubmittedException)
             return HttpStatus.CONFLICT;
         return HttpStatus.INTERNAL_SERVER_ERROR;
     }
