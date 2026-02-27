@@ -3,16 +3,13 @@ package com.example.fuji.service;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.Transformation;
 import com.example.fuji.dto.request.MediaDTO;
-import com.example.fuji.entity.MediaFile;
-import com.example.fuji.entity.enums.ResourceType;
-import com.example.fuji.repository.MediaFileRepository;
+
 import com.example.fuji.utils.MediaValidator;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.coobird.thumbnailator.Thumbnails;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.imageio.ImageIO;

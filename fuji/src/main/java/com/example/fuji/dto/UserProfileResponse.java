@@ -24,19 +24,19 @@ public class UserProfileResponse {
     private LocalDateTime createdAt;
 
     public static UserProfileResponse from(User user) {
-    UserProfileResponse res = new UserProfileResponse();
-    res.setId(user.getId());
-    res.setUsername(user.getUsername());
-    res.setEmail(user.getEmail());
-    res.setFullName(user.getFullName());
-    res.setAvatarUrl(user.getAvatarUrl());
-    // res.setBio(user.getBio());
-    // res.setGender(user.getGender());
-    // res.setPhone(user.getPhone());
-    // res.setJlptLevel(user.getJlptLevel());
-    // res.setActive(user.isActive());
-    res.setCreatedAt(user.getCreatedAt());
-    return res;
-}
+        UserProfileResponse res = new UserProfileResponse();
+        res.setId(user.getId());
+        res.setUsername(user.getUsername());
+        res.setEmail(user.getEmail());
+        res.setFullName(user.getFullName());
+        res.setAvatarUrl(user.getAvatarUrl());
+        res.setBio(user.getBio());
+        res.setGender(user.getGender() != null ? user.getGender().name() : null);
+        res.setPhone(user.getPhone());
+        res.setJlptLevel(user.getJlptLevel() != null ? user.getJlptLevel().name() : null);
+        res.setActive(user.getIsActive() != null ? user.getIsActive() : false);
+        res.setCreatedAt(user.getCreatedAt());
+        return res;
+    }
 
 }
