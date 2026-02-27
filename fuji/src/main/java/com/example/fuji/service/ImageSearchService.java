@@ -49,9 +49,9 @@ public class ImageSearchService {
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
 
         try {
+            @SuppressWarnings("rawtypes")
             ResponseEntity<Map> response = restTemplate.postForEntity(
-                    SERPER_IMAGES_URL, request, Map.class
-            );
+                    SERPER_IMAGES_URL, request, Map.class);
 
             if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
                 log.error("Serper API error: status={}", response.getStatusCode());
@@ -63,7 +63,8 @@ public class ImageSearchService {
 
             @SuppressWarnings("unchecked")
             List<Map<String, Object>> images = (List<Map<String, Object>>) response.getBody().get("images");
-            if (images == null) images = Collections.emptyList();
+            if (images == null)
+                images = Collections.emptyList();
 
             List<ImageItem> items = images.stream().map(img -> ImageItem.builder()
                     .imageUrl((String) img.getOrDefault("imageUrl", ""))
@@ -72,8 +73,7 @@ public class ImageSearchService {
                     .title((String) img.getOrDefault("title", ""))
                     .width(toInt(img.get("imageWidth")))
                     .height(toInt(img.get("imageHeight")))
-                    .build()
-            ).toList();
+                    .build()).toList();
 
             return ImageSearchResponse.builder()
                     .items(items)
@@ -90,9 +90,13 @@ public class ImageSearchService {
     }
 
     private int toInt(Object value) {
-        if (value instanceof Number) return ((Number) value).intValue();
+        if (value instanceof Number)
+            return ((Number) value).intValue();
         if (value instanceof String) {
-            try { return Integer.parseInt((String) value); } catch (NumberFormatException ignored) {}
+            try {
+                return Integer.parseInt((String) value);
+            } catch (NumberFormatException ignored) {
+            }
         }
         return 0;
     }

@@ -56,31 +56,37 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20)
+    @Builder.Default
     private Gender gender = Gender.other;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 10)
+    @Builder.Default
     private JlptLevel jlptLevel = JlptLevel.N5;
 
     @Column(name = "avatar_url", length = 500)
-    private String avatarUrl =
-            "https://png.pngtree.com/png-vector/20190623/ourlarge/pngtree-accountavataruser--flat-color-icon--vector-icon-banner-templ-png-image_1491720.jpg";
+    @Builder.Default
+    private String avatarUrl = "https://png.pngtree.com/png-vector/20190623/ourlarge/pngtree-accountavataruser--flat-color-icon--vector-icon-banner-templ-png-image_1491720.jpg";
 
     // ===== Role =====
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
+    @Builder.Default
     private Role role = Role.STUDENT;
 
     // ===== Status =====
 
     @Column(name = "is_active")
+    @Builder.Default
     private Boolean isActive = true;
 
     @Column(name = "is_admin")
+    @Builder.Default
     private Boolean isAdmin = false;
 
     @Column(name = "is_online")
+    @Builder.Default
     private Boolean isOnline = false;
 
     @Column(name = "last_active_at")

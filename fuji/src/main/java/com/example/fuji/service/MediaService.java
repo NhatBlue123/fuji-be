@@ -3,7 +3,6 @@ package com.example.fuji.service;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.Transformation;
 import com.example.fuji.dto.request.MediaDTO;
-
 import com.example.fuji.utils.MediaValidator;
 
 import lombok.RequiredArgsConstructor;
@@ -44,7 +43,7 @@ public class MediaService {
         return buildMediaDTO(uploadResult, "image");
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public MediaDTO uploadVideo(MultipartFile file) throws IOException {
         mediaValidator.validate(file);
         mediaValidator.isVideo(file);
@@ -65,7 +64,7 @@ public class MediaService {
         return buildMediaDTO(uploadResult, "video");
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public MediaDTO uploadAudio(MultipartFile file) throws IOException {
         mediaValidator.validate(file);
         mediaValidator.isAudio(file);

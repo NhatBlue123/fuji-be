@@ -28,13 +28,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
-import lombok.extern.slf4j.Slf4j;
-
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 @Tag(name = "Authentication", description = "API xác thực người dùng")
-@Slf4j
 public class AuthController {
 
     private final AuthService authService;
@@ -120,7 +117,7 @@ public class AuthController {
     private void addRefreshTokenCookie(jakarta.servlet.http.HttpServletResponse response, String token) {
         ResponseCookie cookie = ResponseCookie.from("refreshToken", token)
                 .httpOnly(true)
-                .secure(false) // TODO: true khi deploy production với HTTPS
+                .secure(false) // NOTE: true khi deploy production với HTTPS
                 .path("/")
                 .maxAge(Duration.ofDays(7))
                 .sameSite("Lax") // Cho phép same-site requests (localhost)
