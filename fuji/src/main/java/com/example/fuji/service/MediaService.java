@@ -3,16 +3,12 @@ package com.example.fuji.service;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.Transformation;
 import com.example.fuji.dto.request.MediaDTO;
-import com.example.fuji.entity.MediaFile;
-import com.example.fuji.entity.enums.ResourceType;
-import com.example.fuji.repository.MediaFileRepository;
 import com.example.fuji.utils.MediaValidator;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.coobird.thumbnailator.Thumbnails;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.imageio.ImageIO;
@@ -39,22 +35,21 @@ public class MediaService {
         byte[] optimizedImage = optimizeImage(file);
 
         Map<String, Object> uploadResult = cloudinary.uploader().upload(optimizedImage, Map.of(
-            "resource_type", "image",
-            "public_id", generateUniqueId(),
-            "folder", "fuji/images"
-        ));
+                "resource_type", "image",
+                "public_id", generateUniqueId(),
+                "folder", "fuji/images"));
 
         log.info("Ảnh tải thành công: {}", uploadResult.get("secure_url"));
         return buildMediaDTO(uploadResult, "image");
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public MediaDTO uploadVideo(MultipartFile file) throws IOException {
         mediaValidator.validate(file);
         mediaValidator.isVideo(file);
 
         Transformation eagerTransform = new Transformation()
-            .width(1000).crop("scale").quality("auto:best").fetchFormat("auto");
+                .width(1000).crop("scale").quality("auto:best").fetchFormat("auto");
 
         Map<String, Object> params = new java.util.HashMap<>();
         params.put("resource_type", "video");
@@ -69,12 +64,12 @@ public class MediaService {
         return buildMediaDTO(uploadResult, "video");
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public MediaDTO uploadAudio(MultipartFile file) throws IOException {
         mediaValidator.validate(file);
         mediaValidator.isAudio(file);
         Transformation audioTransform = new Transformation()
-            .quality("auto:best").fetchFormat("auto");
+                .quality("auto:best").fetchFormat("auto");
 
         Map<String, Object> params = new java.util.HashMap<>();
         params.put("resource_type", "auto");
@@ -99,10 +94,10 @@ public class MediaService {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
 
         Thumbnails.of(input)
-            .size(500, 500)
-            .outputFormat("jpeg")
-            .outputQuality(0.8)
-            .toOutputStream(output);
+                .size(500, 500)
+                .outputFormat("jpeg")
+                .outputQuality(0.8)
+                .toOutputStream(output);
 
         return output.toByteArray();
     }
@@ -114,11 +109,11 @@ public class MediaService {
 
     private MediaDTO buildMediaDTO(Map<String, Object> uploadResult, String resourceType) {
         return MediaDTO.builder()
-            .url((String) uploadResult.get("secure_url"))
-            .publicId((String) uploadResult.get("public_id"))
-            .resourceType(resourceType)
-            .size(((Number) uploadResult.get("bytes")).longValue())
-            .format((String) uploadResult.get("format"))
-            .build();
+                .url((String) uploadResult.get("secure_url"))
+                .publicId((String) uploadResult.get("public_id"))
+                .resourceType(resourceType)
+                .size(((Number) uploadResult.get("bytes")).longValue())
+                .format((String) uploadResult.get("format"))
+                .build();
     }
 }

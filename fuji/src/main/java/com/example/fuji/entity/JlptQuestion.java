@@ -81,6 +81,7 @@ public class JlptQuestion {
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20)
+    @Builder.Default
     private Difficulty difficulty = Difficulty.MEDIUM; // Thêm mức độ khó
 
     /**
