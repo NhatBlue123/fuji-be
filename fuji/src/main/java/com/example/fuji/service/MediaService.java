@@ -39,10 +39,9 @@ public class MediaService {
         byte[] optimizedImage = optimizeImage(file);
 
         Map<String, Object> uploadResult = cloudinary.uploader().upload(optimizedImage, Map.of(
-            "resource_type", "image",
-            "public_id", generateUniqueId(),
-            "folder", "fuji/images"
-        ));
+                "resource_type", "image",
+                "public_id", generateUniqueId(),
+                "folder", "fuji/images"));
 
         log.info("Ảnh tải thành công: {}", uploadResult.get("secure_url"));
         return buildMediaDTO(uploadResult, "image");
@@ -54,7 +53,7 @@ public class MediaService {
         mediaValidator.isVideo(file);
 
         Transformation eagerTransform = new Transformation()
-            .width(1000).crop("scale").quality("auto:best").fetchFormat("auto");
+                .width(1000).crop("scale").quality("auto:best").fetchFormat("auto");
 
         Map<String, Object> params = new java.util.HashMap<>();
         params.put("resource_type", "video");
@@ -74,7 +73,7 @@ public class MediaService {
         mediaValidator.validate(file);
         mediaValidator.isAudio(file);
         Transformation audioTransform = new Transformation()
-            .quality("auto:best").fetchFormat("auto");
+                .quality("auto:best").fetchFormat("auto");
 
         Map<String, Object> params = new java.util.HashMap<>();
         params.put("resource_type", "auto");
@@ -99,10 +98,10 @@ public class MediaService {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
 
         Thumbnails.of(input)
-            .size(500, 500)
-            .outputFormat("jpeg")
-            .outputQuality(0.8)
-            .toOutputStream(output);
+                .size(500, 500)
+                .outputFormat("jpeg")
+                .outputQuality(0.8)
+                .toOutputStream(output);
 
         return output.toByteArray();
     }
@@ -114,11 +113,11 @@ public class MediaService {
 
     private MediaDTO buildMediaDTO(Map<String, Object> uploadResult, String resourceType) {
         return MediaDTO.builder()
-            .url((String) uploadResult.get("secure_url"))
-            .publicId((String) uploadResult.get("public_id"))
-            .resourceType(resourceType)
-            .size(((Number) uploadResult.get("bytes")).longValue())
-            .format((String) uploadResult.get("format"))
-            .build();
+                .url((String) uploadResult.get("secure_url"))
+                .publicId((String) uploadResult.get("public_id"))
+                .resourceType(resourceType)
+                .size(((Number) uploadResult.get("bytes")).longValue())
+                .format((String) uploadResult.get("format"))
+                .build();
     }
 }
