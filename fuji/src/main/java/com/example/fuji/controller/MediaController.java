@@ -83,4 +83,20 @@ public class MediaController {
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 
+    /**
+     * Resolve a single external image URL to a Cloudinary URL.
+     * Called when user selects an image from search results.
+     * Checks cache first; uploads to Cloudinary only if not cached.
+     */
+    @PostMapping("/resolve-image")
+    public ResponseEntity<ApiResponse<ImageSearchService.ResolvedImage>> resolveImage(
+            @RequestBody java.util.Map<String, String> body) {
+        String sourceUrl = body.get("sourceUrl");
+        if (sourceUrl == null || sourceUrl.isBlank()) {
+            throw new BadRequestException("sourceUrl is required");
+        }
+        ImageSearchService.ResolvedImage result = imageSearchService.resolveImage(sourceUrl);
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
 }
