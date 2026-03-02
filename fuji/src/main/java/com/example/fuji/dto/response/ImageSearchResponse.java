@@ -25,5 +25,9 @@ public class ImageSearchResponse {
         private String title;
         private int width;
         private int height;
+        /** Cloudinary public_id (for management/deletion if needed) */
+        private String cloudinaryPublicId;
+        /** Original external source URL (for traceability) */
+        private String sourceUrl;
     }
 }

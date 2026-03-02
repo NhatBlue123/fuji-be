@@ -58,8 +58,9 @@ public class JlptTest {
     @Builder.Default
     private Integer maxScore = 180;
 
-    @Column(name = "pass_score", nullable = false)
-    private Integer passScore;
+    @Column(name = "passing_score", nullable = false, columnDefinition = "INT DEFAULT 90")
+    @Builder.Default
+    private Integer passScore = 90;
 
     @Column(name = "language_knowledge_pass_score")
     @Builder.Default

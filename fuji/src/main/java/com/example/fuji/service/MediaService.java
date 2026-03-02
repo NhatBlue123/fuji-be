@@ -8,13 +8,20 @@ import com.example.fuji.utils.MediaValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.coobird.thumbnailator.Thumbnails;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -26,6 +33,7 @@ public class MediaService {
 
     private final Cloudinary cloudinary;
     private final MediaValidator mediaValidator;
+    private final RestTemplate scrapingRestTemplate = new RestTemplate();
 
     @SuppressWarnings("unchecked")
     public MediaDTO uploadImage(MultipartFile file) throws IOException {
@@ -89,8 +97,71 @@ public class MediaService {
         log.info("Xóa media thành công: {} ({})", publicId, resourceType);
     }
 
+    /**
+     * Download an image from an external URL, optimize it, and upload to Cloudinary.
+     * Used for scraped images (e.g. from Serper image search).
+     *
+     * @param sourceUrl      the external image URL to download
+     * @param sourceUrlHash  SHA-256 hex of sourceUrl (used as part of Cloudinary public_id)
+     * @return MediaDTO with Cloudinary url and publicId
+     */
+    @SuppressWarnings("unchecked")
+    public MediaDTO uploadFromUrl(String sourceUrl, String sourceUrlHash) throws IOException {
+        // Download image bytes from external URL
+        ResponseEntity<byte[]> response = scrapingRestTemplate.getForEntity(sourceUrl, byte[].class);
+        byte[] imageBytes = response.getBody();
+        if (imageBytes == null || imageBytes.length == 0) {
+            throw new IOException("Failed to download image from: " + sourceUrl);
+        }
+
+        // Optimize (resize + compress)
+        byte[] optimized = optimizeImageBytes(imageBytes);
+
+        // Use first 16 chars of hash as public_id suffix for readability
+        String publicIdSuffix = sourceUrlHash.substring(0, Math.min(16, sourceUrlHash.length()));
+
+        Map<String, Object> uploadResult = cloudinary.uploader().upload(optimized, Map.of(
+                "resource_type", "image",
+                "public_id", "scraped_" + publicIdSuffix,
+                "folder", "fuji/scraped",
+                "overwrite", false));
+
+        log.info("Scraped image uploaded: {} -> {}", sourceUrl, uploadResult.get("secure_url"));
+        return buildMediaDTO(uploadResult, "image");
+    }
+
+    /**
+     * Compute SHA-256 hex hash of a string (used for source URL dedup).
+     */
+    public static String sha256(String input) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(input.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(hash);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("SHA-256 not available", e);
+        }
+    }
+
     private byte[] optimizeImage(MultipartFile file) throws IOException {
         BufferedImage input = ImageIO.read(file.getInputStream());
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+
+        Thumbnails.of(input)
+                .size(500, 500)
+                .outputFormat("jpeg")
+                .outputQuality(0.8)
+                .toOutputStream(output);
+
+        return output.toByteArray();
+    }
+
+    private byte[] optimizeImageBytes(byte[] rawBytes) throws IOException {
+        BufferedImage input = ImageIO.read(new ByteArrayInputStream(rawBytes));
+        if (input == null) {
+            // If ImageIO can't parse it, return raw bytes (e.g. SVG, WebP)
+            return rawBytes;
+        }
         ByteArrayOutputStream output = new ByteArrayOutputStream();
 
         Thumbnails.of(input)
