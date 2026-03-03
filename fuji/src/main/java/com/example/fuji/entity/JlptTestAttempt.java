@@ -51,13 +51,13 @@ public class JlptTestAttempt {
     /**
      * Tổng điểm đạt được (VD: 125/180)
      */
-    @Column(name = "total_score", nullable = false, precision = 5, scale = 2)
+    @Column(name = "total_score", precision = 5, scale = 2)
     private BigDecimal totalScore;
 
     /**
      * Duplicate field for 'score' column required by actual database
      */
-    @Column(name = "score", nullable = false, precision = 5, scale = 2)
+    @Column(name = "score", precision = 5, scale = 2)
     private BigDecimal score;
 
     /**
@@ -69,13 +69,13 @@ public class JlptTestAttempt {
     /**
      * Tỉ lệ phần trăm điểm đạt được (VD: 75.5%)
      */
-    @Column(name = "percentage", nullable = false, precision = 5, scale = 2)
+    @Column(name = "percentage", precision = 5, scale = 2)
     private BigDecimal percentage;
 
     /**
      * Trạng thái đỗ/trượt
      */
-    @Column(name = "is_passed", nullable = false)
+    @Column(name = "is_passed")
     private Boolean isPassed;
 
     // ========================================================================
@@ -110,16 +110,16 @@ public class JlptTestAttempt {
     // PHẦN THỐNG KÊ
     // ========================================================================
 
-    @Column(name = "correct_answers", nullable = false)
+    @Column(name = "correct_answers")
     private Integer correctAnswers;
 
-    @Column(name = "total_questions", nullable = false)
+    @Column(name = "total_questions")
     private Integer totalQuestions;
 
     /**
      * Thời gian làm bài (giây)
      */
-    @Column(name = "time_spent", nullable = false)
+    @Column(name = "time_spent")
     private Integer timeSpent;
 
     // ========================================================================
@@ -130,14 +130,14 @@ public class JlptTestAttempt {
      * Lưu chi tiết từng câu trả lời (JSON)
      */
 
-    @Column(name = "user_answers", nullable = false, columnDefinition = "JSON")
+    @Column(name = "user_answers", columnDefinition = "JSON")
     @JdbcTypeCode(SqlTypes.JSON)
     private String userAnswers;
 
     /**
      * Duplicate field for 'answers' column required by database
      */
-    @Column(name = "answers", nullable = false, columnDefinition = "JSON")
+    @Column(name = "answers", columnDefinition = "JSON")
     @JdbcTypeCode(SqlTypes.JSON)
     private String answers;
 
@@ -151,4 +151,25 @@ public class JlptTestAttempt {
 
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
+
+    // ========================================================================
+    // ANTI-CHEAT (EXAM LIFECYCLE TRACKING)
+    // ========================================================================
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", length = 20)
+    @Builder.Default
+    private com.example.fuji.entity.enums.AttemptStatus status = com.example.fuji.entity.enums.AttemptStatus.IN_PROGRESS;
+
+    /**
+     * Thời lượng bài thi được snapshot tại thời điểm bắt đầu (phút)
+     */
+    @Column(name = "duration_minutes")
+    private Integer durationMinutes;
+
+    /**
+     * Thời gian hết hạn = startedAt + durationMinutes
+     */
+    @Column(name = "expires_at")
+    private LocalDateTime expiresAt;
 }

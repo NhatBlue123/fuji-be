@@ -264,7 +264,8 @@ public class CourseService {
 
     private String extractPublicId(String url) {
         // Extract Cloudinary public_id from URL
-        // e.g. https://res.cloudinary.com/.../fuji/images/media_xxx → fuji/images/media_xxx
+        // e.g. https://res.cloudinary.com/.../fuji/images/media_xxx →
+        // fuji/images/media_xxx
         String[] parts = url.split("/upload/");
         if (parts.length > 1) {
             String path = parts[1];
