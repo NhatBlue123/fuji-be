@@ -181,11 +181,7 @@
 			<artifactId>testcontainers-mysql</artifactId>
 			<scope>test</scope>
 		</dependency>
-	<dependency>
-    <groupId>org.projectlombok</groupId>
-    <artifactId>lombok</artifactId>
-    <optional>true</optional>
-</dependency>
+
 
 		<!-- Cloudinary Java SDK -->
 		<dependency>
@@ -214,7 +210,32 @@
 			<artifactId>spring-dotenv</artifactId>
 			<version>4.0.0</version>
 		</dependency>
+
+		<!-- ============================================ -->
+		<!-- VIDEO CALL MODULE                           -->
+		<!-- ============================================ -->
+
+		<!-- Socket.IO Server (Java implementation via Netty) -->
+		<dependency>
+			<groupId>com.corundumstudio.socketio</groupId>
+			<artifactId>netty-socketio</artifactId>
+			<version>2.0.12</version>
+		</dependency>
+
+		<!-- Micrometer + Prometheus for monitoring /actuator/prometheus -->
+		<dependency>
+			<groupId>io.micrometer</groupId>
+			<artifactId>micrometer-registry-prometheus</artifactId>
+		</dependency>
+
+		<!-- Jackson JSR-310 for LocalDateTime serialization -->
+		<dependency>
+			<groupId>com.fasterxml.jackson.datatype</groupId>
+			<artifactId>jackson-datatype-jsr310</artifactId>
+		</dependency>
+
 	</dependencies>
+
 
 	<build>
 		<plugins>
