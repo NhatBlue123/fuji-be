@@ -25,10 +25,7 @@ public class UserLearningStreak {
         name = "user_id",
         nullable = false,
         unique = true,
-        foreignKey = @ForeignKey(
-            name = "fk_streaks_user",
-            foreignKeyDefinition = "FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE"
-        )
+        foreignKey = @ForeignKey(name = "fk_streaks_user")
     )
     private User user;
 

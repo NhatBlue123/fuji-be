@@ -57,8 +57,10 @@ public class User {
     private JlptLevel jlptLevel = JlptLevel.N5;
 
     @Column(name = "avatar_url", length = 500)
-    private String avatarUrl =
-            "https://png.pngtree.com/png-vector/20190623/ourlarge/pngtree-accountavataruser--flat-color-icon--vector-icon-banner-templ-png-image_1491720.jpg";
+    private String avatarUrl = "https://png.pngtree.com/png-vector/20190623/ourlarge/pngtree-accountavataruser--flat-color-icon--vector-icon-banner-templ-png-image_1491720.jpg";
+
+    @Column(name = "premium_expire_at")
+    private LocalDateTime premiumExpireAt;
 
     // ===== Role =====
 

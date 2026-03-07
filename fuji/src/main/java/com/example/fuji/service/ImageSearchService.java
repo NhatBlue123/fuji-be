@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
-
+import java.util.Map;;
 /**
  * Service for searching images via Serper.dev Images API.
  * Restricts results to www.irasutoya.com.
@@ -49,7 +49,8 @@ public class ImageSearchService {
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
 
         try {
-            ResponseEntity<Map> response = restTemplate.postForEntity(
+            @SuppressWarnings("unchecked")
+            ResponseEntity<Map<String, Object>> response = (ResponseEntity<Map<String, Object>>) (ResponseEntity<?>) restTemplate.postForEntity(
                     SERPER_IMAGES_URL, request, Map.class
             );
 

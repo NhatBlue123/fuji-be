@@ -5,6 +5,7 @@ import com.example.fuji.dto.UserProfileResponse;
 import com.example.fuji.dto.request.ChangePasswordRequest;
 import com.example.fuji.entity.User;
 import com.example.fuji.repository.UserRepository;
+import com.example.fuji.service.FileStorageService;
 import com.example.fuji.service.UserService;
 import lombok.RequiredArgsConstructor;
 
@@ -12,8 +13,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
 import com.example.fuji.enums.Gender;
 import com.example.fuji.enums.JlptLevel;
+import com.example.fuji.exception.BadRequestException;
+import com.example.fuji.exception.ResourceNotFoundException;
 
 @Service
 @RequiredArgsConstructor
@@ -21,7 +26,6 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
 
-    // ================== GET MY PROFILE ==================
     @Override
     public UserProfileResponse getMyProfileById(Long userId) {
         User user = userRepository.findById(userId)
@@ -30,45 +34,89 @@ public class UserServiceImpl implements UserService {
         return UserProfileResponse.from(user);
     }
 
-    // ================== UPDATE MY PROFILE ==================
+    private final FileStorageService fileStorageService;
+
+    @Transactional
     @Override
-    @Transactional // Đảm bảo việc lưu vào DB an toàn
-    public UserProfileResponse updateMyProfileById(Long userId, UpdateProfileRequest request) {
+    public UserProfileResponse updateMyProfileById(
+            Long userId,
+            UpdateProfileRequest request,
+            MultipartFile avatar) {
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        // Sửa lại tên các hàm set cho đúng chuẩn CamelCase
-        user.setFullName(request.getFullName());
-        user.setBio(request.getBio());
-        user.setPhone(request.getPhone());
-        user.setGender(parseGender(request.getGender()));
-        user.setJlptLevel(parseJlptLevel(request.getJlptLevel()));
+        // ===== Update text fields only if not null/empty =====
+
+        if (request.getFullName() != null && !request.getFullName().isEmpty()) {
+            user.setFullName(request.getFullName().trim());
+        }
+
+        if (request.getBio() != null && !request.getBio().isEmpty()) {
+            user.setBio(request.getBio().trim());
+        }
+
+        if (request.getPhone() != null && !request.getPhone().isEmpty()) {
+            user.setPhone(request.getPhone().trim());
+        }
+
+        if (request.getGender() != null && !request.getGender().isEmpty()) {
+            user.setGender(parseGender(request.getGender()));
+        }
+
+        if (request.getJlptLevel() != null && !request.getJlptLevel().isEmpty()) {
+            user.setJlptLevel(parseJlptLevel(request.getJlptLevel()));
+        }
+
+        // ===== Avatar =====
+
+        if (avatar != null && !avatar.isEmpty()) {
+
+            validateAvatar(avatar);
+
+            String avatarUrl = fileStorageService.save(avatar);
+
+            user.setAvatarUrl(avatarUrl);
+        }
 
         userRepository.save(user);
 
         return UserProfileResponse.from(user);
     }
 
-    private Gender parseGender(String gender) {
-        if (gender == null)
-            return null;
-
+    private Gender parseGender(String value) {
         try {
-            return Gender.valueOf(gender.trim().toLowerCase());
-        } catch (IllegalArgumentException e) {
-            throw new RuntimeException("Invalid gender value");
+            return Gender.valueOf(value.trim().toUpperCase());
+        } catch (Exception e) {
+            throw new BadRequestException(
+                    "Invalid gender. Allowed: MALE, FEMALE, OTHER");
         }
     }
 
-    private JlptLevel parseJlptLevel(String level) {
-        if (level == null)
-            return null;
-
+    private JlptLevel parseJlptLevel(String value) {
         try {
-            return JlptLevel.valueOf(level.trim().toUpperCase());
-        } catch (IllegalArgumentException e) {
-            throw new RuntimeException("Invalid JLPT level");
+            return JlptLevel.valueOf(value.trim().toUpperCase());
+        } catch (Exception e) {
+            throw new BadRequestException(
+                    "Invalid JLPT level. Allowed: N1–N5");
+        }
+    }
+
+    private void validateAvatar(MultipartFile file) {
+
+        if (file.getSize() > 5 * 1024 * 1024) {
+            throw new BadRequestException("Avatar must be <= 5MB");
+        }
+
+        String type = file.getContentType();
+
+        if (type == null ||
+                (!type.equals("image/jpeg")
+                        && !type.equals("image/png")
+                        && !type.equals("image/webp"))) {
+
+            throw new BadRequestException(
+                    "Only JPG, PNG, WEBP images are allowed");
         }
     }
 
@@ -81,7 +129,6 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // 1️⃣ Kiểm tra mật khẩu hiện tại
         if (!passwordEncoder.matches(
                 request.getCurrentPassword(),
                 user.getPasswordHash())) {
@@ -89,10 +136,7 @@ public class UserServiceImpl implements UserService {
             throw new RuntimeException("Current password is incorrect");
         }
 
-        // 2️⃣ Encode mật khẩu mới
         String newPasswordHash = passwordEncoder.encode(request.getNewPassword());
-
-        // 3️⃣ Lưu vào DB
         user.setPasswordHash(newPasswordHash);
 
         userRepository.save(user);

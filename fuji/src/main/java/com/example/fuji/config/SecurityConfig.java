@@ -3,6 +3,7 @@ package com.example.fuji.config;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -27,72 +28,73 @@ import com.example.fuji.filter.JwtAuthenticationFilter;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    @Autowired
-    private JwtAuthenticationFilter jwtAuthFilter;
+        @Autowired
+        private JwtAuthenticationFilter jwtAuthFilter;
 
-    // ===== Password Encoder =====
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+        // ===== Password Encoder =====
+        @Bean
+        public PasswordEncoder passwordEncoder() {
+                return new BCryptPasswordEncoder();
+        }
 
-    // ===== Security Filter =====
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        // ===== Security Filter =====
+        @Bean
+        public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
-        return http
-                .csrf(csrf -> csrf.disable())
+                return http
+                                .csrf(csrf -> csrf.disable())
 
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
-                .sessionManagement(sess ->
-                        sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
+                                .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-                .authorizeHttpRequests(auth -> auth
-                        // Cho phép preflight request
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                                .authorizeHttpRequests(auth -> auth
+                                                // Cho phép preflight request
+                                                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // Public APIs
-                        .requestMatchers(
-                                "/api/auth/login",
-                                "/api/auth/register",
-                                "/api/auth/refresh",
-                                "/swagger-ui/**",
-                                "/v3/api-docs/**",
-                                "/actuator/**"
-                        ).permitAll()
+                                                // Public APIs
+                                                .requestMatchers(
+                                                                "/api/auth/login",
+                                                                "/api/auth/register",
+                                                                "/api/auth/refresh",
+                                                                "/api/payments/callback",
+                                                                "/api/payments/test-signature",
+                                                                "/swagger-ui/**",
+                                                                "/v3/api-docs/**",
+                                                                "/actuator/**")
+                                                .permitAll()
 
-                        // Protected APIs
-                        .anyRequest().authenticated()
-                )
+                                                // Protected APIs
+                                                .anyRequest().authenticated())
 
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
 
-                .build();
-    }
+                                .build();
+        }
 
-    // ===== Authentication Manager =====
-    @Bean
-    public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
-    }
+        // ===== Authentication Manager =====
+        @Bean
+        public AuthenticationManager authenticationManager(
+                        AuthenticationConfiguration config) throws Exception {
+                return config.getAuthenticationManager();
+        }
 
-    // ===== CORS Config =====
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration config = new CorsConfiguration();
+        // ===== CORS Config =====
+        @Bean
+        public CorsConfigurationSource corsConfigurationSource() {
+                CorsConfiguration config = new CorsConfiguration();
 
-        config.setAllowCredentials(true);
-        config.setAllowedOrigins(List.of("http://localhost:3000"));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("*"));
+                config.setAllowCredentials(true);
+                config.setAllowedOrigins(List.of("http://localhost:3000"));
+                config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+                config.setAllowedHeaders(List.of("*"));
 
-        UrlBasedCorsConfigurationSource source =
-                new UrlBasedCorsConfigurationSource();
+                UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 
-        source.registerCorsConfiguration("/**", config);
-        return source;
-    }
+                source.registerCorsConfiguration("/**", config);
+                return source;
+        }
+
+        @Value("${xgate.secret-key}")
+        private String secretKey;
 }

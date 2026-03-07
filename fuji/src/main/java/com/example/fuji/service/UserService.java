@@ -1,6 +1,8 @@
 package com.example.fuji.service;
 
 
+import org.springframework.web.multipart.MultipartFile;
+
 import com.example.fuji.dto.UpdateProfileRequest;
 import com.example.fuji.dto.UserProfileResponse;
 import com.example.fuji.dto.request.ChangePasswordRequest;
@@ -8,9 +10,10 @@ public interface UserService {
 
     UserProfileResponse getMyProfileById(Long userId);
 
-    UserProfileResponse updateMyProfileById(
+     UserProfileResponse updateMyProfileById(
             Long userId,
-            UpdateProfileRequest request);
+            UpdateProfileRequest request,
+            MultipartFile avatar);
     
       void changePassword(Long userId, ChangePasswordRequest request);
 }

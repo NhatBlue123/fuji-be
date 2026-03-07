@@ -4,15 +4,19 @@ import com.example.fuji.dto.UpdateProfileRequest;
 import com.example.fuji.dto.UserProfileResponse;
 import com.example.fuji.dto.request.ChangePasswordRequest;
 import com.example.fuji.service.UserService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.validation.Valid;
 import com.example.fuji.security.UserPrincipal;
 import java.util.Map;
+import org.springframework.http.MediaType;
+
 @RestController
 @RequestMapping("/api/users/me")
 @RequiredArgsConstructor
@@ -28,15 +32,25 @@ public class UserController {
         return ResponseEntity.ok(
                 userService.getMyProfileById(principal.getId()));
     }
+    private final ObjectMapper objectMapper;
 
-    @PutMapping
+    @PutMapping(value = "/me", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<UserProfileResponse> updateMyProfile(
             Authentication authentication,
-            @Valid @RequestBody UpdateProfileRequest request) {
+            @RequestPart(value = "profile") String profileJson,
+            @RequestPart(value = "avatar", required = false) MultipartFile avatar) throws Exception {
 
         UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
-        return ResponseEntity.ok(
-                userService.updateMyProfileById(principal.getId(), request));
+
+        
+        UpdateProfileRequest request = objectMapper.readValue(profileJson, UpdateProfileRequest.class);
+
+        UserProfileResponse response = userService.updateMyProfileById(
+                principal.getId(),
+                request,
+                avatar);
+
+        return ResponseEntity.ok(response);
     }
 
     @PutMapping("/change-password")
@@ -55,8 +69,7 @@ public class UserController {
         userService.changePassword(userId, request);
 
         return ResponseEntity.ok(
-        Map.of("message", "Password changed successfully")
-    );
+                Map.of("message", "Password changed successfully"));
     }
 }
 // import org.springframework.data.domain.Page;
